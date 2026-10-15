@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "images": {
+    "human_front": {
+      "path": "assets/images/human_front.gif",
+      "size": [
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        31
+      ],
+      "author": "intellikat",
+      "source": "https://intellikat.itch.io/isometric-character-template",
+      "license": "CC0-1.0",
+      "license_file": "assets/licenses/CC0-1.0.txt",
+      "original_path": "isometric_character_template_2023_06_16/cycles/template-front-stand.gif",
+      "modifications": "None; original native-resolution standing frame. Runtime scaling/tint may be applied.",
+      "sha256": "9e1fff4caec72c21885ad19b1a1935e64f516c688eda9f765d2417975d98c2c7"
+    },
+    "human_rear": {
+      "path": "assets/images/human_rear.gif",
+      "size": [
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        31
+      ],
+      "author": "intellikat",
+      "source": "https://intellikat.itch.io/isometric-character-template",
+      "license": "CC0-1.0",
+      "license_file": "assets/licenses/CC0-1.0.txt",
+      "original_path": "isometric_character_template_2023_06_16/cycles/template-rear-stand.gif",
+      "modifications": "None; original native-resolution standing frame. Runtime scaling/tint may be applied.",
+      "sha256": "b4634da2653579af6d9e55b31bfbfe68fe44151cb1d7000f0b131d505e1b9abc"
+    },
+    "pipes": {
+      "path": "assets/images/pipes.png",
+      "size": [
+        192,
+        512
+      ],
+      "frame": [
+        32,
+        128,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        28
+      ],
+      "author": "Darkmoonfire",
+      "source": "https://darkmoonfire.itch.io/isometric-pipes",
+      "license": "CC-BY-SA-4.0",
+      "license_file": "assets/licenses/CC-BY-SA-4.0.txt",
+      "original_path": "Isometric_Pipes.png",
+      "modifications": "None; complete original sheet, frame coordinates only. Derived art remains CC-BY-SA-4.0.",
+      "sha256": "0dca00280b2e9819f142878780cde96e94ce6dc868c26d48a80ee4777a1b6296"
+    }
+  },
+  "sounds": {
+    "click": {
+      "path": "assets/sounds/click.ogg",
+      "author": "ObsydianX",
+      "source": "https://obsydianx.itch.io/interface-sfx-pack-1",
+      "license": "CC0-1.0",
+      "license_file": "assets/licenses/CC0-1.0.txt",
+      "original_path": "Ogg/Cursor_tones/cursor_style_2.ogg",
+      "modifications": "Filename shortened; audio bytes unchanged.",
+      "sha256": "479c14f3b0f34c1f3730f632b590055075287e31837a3e5a06e7fb064df35aab",
+      "duration_seconds": 6.0
+    },
+    "confirm": {
+      "path": "assets/sounds/confirm.ogg",
+      "author": "ObsydianX",
+      "source": "https://obsydianx.itch.io/interface-sfx-pack-1",
+      "license": "CC0-1.0",
+      "license_file": "assets/licenses/CC0-1.0.txt",
+      "original_path": "Ogg/Confirm_tones/style2/confirm_style_2_001.ogg",
+      "modifications": "Filename shortened; audio bytes unchanged.",
+      "sha256": "272740c15267c9464f0c7d2c06f9fc39e40a71864c739e728d21f20313260f23",
+      "duration_seconds": 6.0
+    },
+    "error": {
+      "path": "assets/sounds/error.ogg",
+      "author": "ObsydianX",
+      "source": "https://obsydianx.itch.io/interface-sfx-pack-1",
+      "license": "CC0-1.0",
+      "license_file": "assets/licenses/CC0-1.0.txt",
+      "original_path": "Ogg/Error_tones/style2/error_style_2_001.ogg",
+      "modifications": "Filename shortened; audio bytes unchanged.",
+      "sha256": "5ac111ce325e5f128a4401f83a9af29db3a2d2e514f1e9e7c6bdc1a1d165dacf",
+      "duration_seconds": 6.0
+    },
+    "back": {
+      "path": "assets/sounds/back.ogg",
+      "author": "ObsydianX",
+      "source": "https://obsydianx.itch.io/interface-sfx-pack-1",
+      "license": "CC0-1.0",
+      "license_file": "assets/licenses/CC0-1.0.txt",
+      "original_path": "Ogg/Back_tones/style2/back_style_2_001.ogg",
+      "modifications": "Filename shortened; audio bytes unchanged.",
+      "sha256": "e5b44130fb1a0775a558e80e53e4c72428ffe6c9ebccf5dd369a5e488d7acdf3",
+      "duration_seconds": 6.0
+    }
+  },
+  "placeholders": {
+    "floor": {
+      "rendering": "pygame-code",
+      "author": "Rpg2d project",
+      "reason": "Temporary geometry, not an integrated external pack."
+    },
+    "wall": {
+      "rendering": "pygame-code",
+      "author": "Rpg2d project",
+      "reason": "Temporary geometry, not an integrated external pack."
+    },
+    "pump": {
+      "rendering": "pygame-code",
+      "author": "Rpg2d project",
+      "reason": "Temporary geometry, not an integrated external pack."
+    },
+    "tank": {
+      "rendering": "pygame-code",
+      "author": "Rpg2d project",
+      "reason": "Temporary geometry, not an integrated external pack."
+    },
+    "panel": {
+      "rendering": "pygame-code",
+      "author": "Rpg2d project",
+      "reason": "Temporary geometry, not an integrated external pack."
+    },
+    "credential": {
+      "rendering": "pygame-code",
+      "author": "Rpg2d project",
+      "reason": "Temporary geometry, not an integrated external pack."
+    },
+    "medkit": {
+      "rendering": "pygame-code",
+      "author": "Rpg2d project",
+      "reason": "Temporary geometry, not an integrated external pack."
+    },
+    "key": {
+      "rendering": "pygame-code",
+      "author": "Rpg2d project",
+      "reason": "Temporary geometry, not an integrated external pack."
+    }
+  },
+  "not_integrated": {
+    "sbs": {
+      "source": "https://screamingbrainstudios.itch.io/isotilepack",
+      "license": "CC0-1.0",
+      "reason": "HTTP 429; no further requests"
+    }
+  }
+}
