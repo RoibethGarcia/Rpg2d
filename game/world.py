@@ -17,13 +17,26 @@ class GridMap:
     height: int
     blocked: set[Cell] = field(default_factory=set)
 
+    adjacency: dict[Cell, tuple[Cell, ...]] | None = None
+    step_directions: dict | None = None
+
     def in_bounds(self, cell: Cell) -> bool:
         return 0 <= cell[0] < self.width and 0 <= cell[1] < self.height
 
     def walkable(self, cell: Cell) -> bool:
         return self.in_bounds(cell) and cell not in self.blocked
 
+    def can_step(self, start: Cell, target: Cell) -> bool:
+        return self.walkable(start) and target in self.neighbors(start)
+
+    def direction_target(self, cell: Cell, delta: Cell) -> Cell:
+        if self.step_directions is not None:
+            return self.step_directions.get(cell, {}).get(delta, (-1, -1))
+        return cell[0] + delta[0], cell[1] + delta[1]
+
     def neighbors(self, cell: Cell) -> list[Cell]:
+        if self.adjacency is not None:
+            return [p for p in self.adjacency.get(cell, ()) if self.walkable(p)]
         return [p for dx, dy in DIRECTIONS if self.walkable(p := (cell[0] + dx, cell[1] + dy))]
 
     def find_path(self, start: Cell, goal: Cell, occupied=(), allow_goal=False) -> list[Cell]:

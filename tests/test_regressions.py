@@ -1,6 +1,7 @@
 """Independent adversarial domain checks, separate from subsystem tests."""
 import unittest
 from game.model import GameState, Unit
+from game.content import new_legacy_game
 from game.world import GridMap, Projection
 
 
@@ -135,7 +136,7 @@ class StateRegressionTests(unittest.TestCase):
         self.assertEqual(state.mode, 'victory')
 
     def test_reset_does_not_share_nested_patrol_objects_or_pending_state(self):
-        first, other = GameState.new(), GameState.new()
+        first, other = new_legacy_game(), new_legacy_game()
         first.patrols['guard1']['cells'][0][0] = 999
         first.objects[0]['cell'] = (99, 99)
         first.player.hp = 1

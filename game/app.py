@@ -33,8 +33,21 @@ class LastValveGame(GameLoop):
         if self.audio_enabled:
             self.ui_channel.play(self.assets.get_sound(name))
 
-    def start_new_game(self):
+    def start_new_game(self, map_id='hondonada'):
+        if map_id not in ('hondonada', 'puesto', 'planta'):
+            raise ValueError('Mapa inicial de prueba no permitido')
         self.state = GameState.new()
+        if map_id == 'puesto':
+            self.state.player.cell = (4, 10)
+            if not self.state.travel('to_puesto'):
+                raise ValueError('Aparición inicial del puesto inválida')
+        elif map_id == 'planta':
+            # Acceso de prueba explícito: no abrir mantenimiento, curar una
+            # partida existente ni conceder bajas/credencial para saltar reglas.
+            self.state.map_id = 'planta'
+            self.state.player.cell = self.state.maps['puesto'].exits['to_planta'].spawn
+            self.state.validate_campaign()
+            self.state.message = 'Planta: explora las escaleras, busca botiquines y vence al jefe. Después activa la válvula con E.'
         self.scenes['play'].reset()
         self.change_scene('play')
         self.sound('confirm')

@@ -2,6 +2,7 @@
 import pygame
 from engine.game_object import GameObject
 from game.world import Projection
+from game.environment import EnvironmentArt, LayeredEnvironmentArt
 
 BG = (17, 24, 29)
 PANEL = (26, 36, 42)
@@ -49,27 +50,32 @@ def bar(surface, rect, value, maximum, color):
 
 class WorldActor(GameObject):
     """Adaptador visual; la única casilla verdadera pertenece a Unit."""
-    def __init__(self, unit, frames):
+    def __init__(self, unit, frames, anchors):
         super().__init__(0, 0, frames['front'])
         self.unit = unit
         self.directions = frames
+        self.anchors = anchors
         self.facing = 'front'
         self.foot = (0, 0)
 
     def sync(self, state, projection):
-        col, row = self.unit.cell
+        self.foot = projection.center(self.unit.cell)
         motion = state.motions.get(self.unit.id)
         if motion:
             fraction = min(1, motion.elapsed / motion.duration)
-            col = motion.start[0] + (motion.end[0] - motion.start[0]) * fraction
-            row = motion.start[1] + (motion.end[1] - motion.start[1]) * fraction
-            dx, dy = motion.end[0] - motion.start[0], motion.end[1] - motion.start[1]
-            self.facing = 'rear' if dy < 0 or dx < 0 else 'front'
+            start, end = projection.center(motion.start), projection.center(motion.end)
+            # Interpolar apoyos proyectados, no IDs de casillas de un grafo.
+            self.foot = tuple(a + (b - a) * fraction for a, b in zip(start, end))
+            if hasattr(projection, 'layout'):
+                self.facing = 'rear' if end[1] < start[1] else 'front'
+            else:
+                dx, dy = motion.end[0] - motion.start[0], motion.end[1] - motion.start[1]
+                self.facing = 'rear' if dy < 0 or dx < 0 else 'front'
         self.image = self.directions[self.facing]
-        self.foot = projection.center((col, row))
         self.rect = self.image.get_rect()
-        # Manifest humano: ancla (16,31), escala 2. Pie estable al cambiar sprite.
-        self.rect.topleft = (round(self.foot[0] - 32), round(self.foot[1] - 62))
+        # Ancla local de cada vista ya escalada, independiente de la caja del arma.
+        anchor = self.anchors[self.facing]
+        self.rect.topleft = (round(self.foot[0] - anchor[0]), round(self.foot[1] - anchor[1]))
 
     def draw(self, surface):
         x, y = self.foot
@@ -78,12 +84,13 @@ class WorldActor(GameObject):
         pygame.draw.ellipse(surface, color, (x - 16, y - 4, 32, 10), 2)
         super().draw(surface)
         if self.unit.boss:
-            # Insignia y hombros: el jefe no se distingue solamente por color.
-            pygame.draw.polygon(surface, AMBER, [(x - 7, y - 59), (x, y - 67), (x + 7, y - 59), (x, y - 51)])
-            pygame.draw.line(surface, AMBER, (x - 15, y - 43), (x + 15, y - 43), 4)
+            # Insignia externa: no pintar encima de la ilustración original.
+            top = self.rect.top - 18
+            pygame.draw.polygon(surface, AMBER, [(x - 5, top + 4), (x, top), (x + 5, top + 4), (x, top + 8)])
         if self.unit.id == 'vera':
-            pygame.draw.polygon(surface, WATER, [(x, y - 76), (x - 5, y - 84), (x + 5, y - 84)])
-        bar(surface, pygame.Rect(round(x - 16), round(y - 49), 32, 4), self.unit.hp, self.unit.max_hp, color)
+            top = self.rect.top - 18
+            pygame.draw.polygon(surface, WATER, [(x, top + 8), (x - 5, top), (x + 5, top)])
+        bar(surface, pygame.Rect(round(x - 16), self.rect.top - 7, 32, 4), self.unit.hp, self.unit.max_hp, color)
 
 
 class WorldRenderer:
@@ -92,24 +99,57 @@ class WorldRenderer:
         self.type = Typography()
         self.projection = Projection(48, 24, origin=(400, 110))
         self.actors = {}
+        self.environment = EnvironmentArt(game)
+        self.hondonada = LayeredEnvironmentArt(game, WORLD_RECT)
+        self.puesto = LayeredEnvironmentArt(game, WORLD_RECT, 'puesto')
+        self.planta = LayeredEnvironmentArt(game, WORLD_RECT, 'planta')
+        self.layered_maps = {'hondonada': self.hondonada, 'puesto': self.puesto,
+                             'planta': self.planta}
+        self.debug_navigation = False
+        self._map_id = None
         self.frames = {}
-        for role, tint in [('vera', (155, 242, 231)), ('guard', (225, 177, 144)), ('boss', (234, 193, 125))]:
+        self.anchors = {}
+        for role in ('vera', 'guard', 'boss'):
             self.frames[role] = {}
+            self.anchors[role] = {}
             for facing in ('front', 'rear'):
-                image = game.assets.get_image('human_' + facing).copy()
-                image.fill((*tint, 255), special_flags=pygame.BLEND_RGBA_MULT)
-                self.frames[role][facing] = pygame.transform.scale(image, (64, 64))
+                name = f'{role}_{facing}'
+                record = game.manifest['images'][name]
+                image = game.assets.get_image(name).subsurface(record['frame'])
+                height = record['render_height']
+                size = (round(image.get_width() * height / image.get_height()), height)
+                # Preparar una sola vez. No deformar el cuerpo ni teñir los PNG.
+                self.frames[role][facing] = pygame.transform.smoothscale(image, size)
+                self.anchors[role][facing] = (
+                    round(record['anchor'][0] * size[0] / image.get_width()),
+                    round(record['anchor'][1] * size[1] / image.get_height()))
         record = game.manifest['images']['pipes']
         self.pipe = pygame.transform.scale(game.assets.get_image('pipes').subsurface(record['frame']), (48, 48))
 
+    def configure(self, state):
+        map_id = state.map_id if state is not None else 'legacy'
+        if map_id != self._map_id:
+            self.actors.clear()
+            self.projection = (self.layered_maps[map_id].projection if map_id in self.layered_maps
+                               else Projection(48, 24, origin=(400, 110)))
+            self._map_id = map_id
+
     def reset(self):
         self.actors.clear()
+        self.configure(self.game.state)
 
     def diamond(self, cell):
+        if hasattr(self.projection, 'polygon'):
+            return self.projection.polygon(cell)
         x, y = self.projection.project(*cell)
         return [(x, y), (x + 24, y + 12), (x, y + 24), (x - 24, y + 12)]
 
-    def tile(self, surface, cell, state):
+    def tile(self, surface, cell, state, style=None):
+        if style is not None:
+            # Underlay explícito para las juntas del rombo; la textura viene del atlas.
+            pygame.draw.polygon(surface, style['underlay'], self.diamond(cell))
+            self.environment.blit(surface, style['floor'], self.projection.center(cell))
+            return
         sector = min(2, cell[0] // 8)
         shades = [(68, 69, 62), (66, 76, 73), (66, 76, 83)]
         color = shades[sector]
@@ -121,7 +161,10 @@ class WorldRenderer:
         if cell[0] in (7, 15) and cell not in state.grid.blocked:
             pygame.draw.line(surface, (148, 116, 66), points[0], points[1], 2)
 
-    def wall(self, surface, cell):
+    def wall(self, surface, cell, style=None):
+        if style is not None:
+            self.environment.blit(surface, style['wall'], self.projection.center(cell))
+            return
         points = self.diamond(cell)
         top = [(x, y - 15) for x, y in points]
         pygame.draw.polygon(surface, (52, 60, 61), [top[3], top[2], points[2], points[3]])
@@ -131,7 +174,22 @@ class WorldRenderer:
         x, y = self.projection.center(cell)
         pygame.draw.line(surface, (153, 113, 66), (x - 9, y - 15), (x + 7, y - 7), 2)
 
-    def prop(self, surface, obj, state):
+    def prop(self, surface, obj, state, style=None):
+        if obj.get('presentation') == 'valve':
+            x, y = self.projection.center(tuple(obj['cell']))
+            active = obj['id'] in state.opened
+            color = WATER if active or state.credential else AMBER
+            self.environment.blit(surface, 'valve', (x, y))
+            pygame.draw.circle(surface, color, (round(x), round(y - 20)), 10, 2)
+            self.type.text(surface, 'E: Válvula', (x - 29, y - 44), 18, color)
+            return
+        if style is not None and obj['kind'] in self.environment.PROP_FRAMES:
+            foot = self.projection.center(tuple(obj['cell']))
+            self.environment.blit(surface, self.environment.PROP_FRAMES[obj['kind']], foot)
+            if obj['kind'] in ('panel', 'mechanism', 'maintenance'):
+                active = state.credential if obj['kind'] == 'panel' else obj['id'] in state.opened
+                pygame.draw.circle(surface, WATER if active else AMBER, (round(foot[0]), round(foot[1] - 28)), 4)
+            return
         x, y = self.projection.center(tuple(obj['cell']))
         kind = obj['kind']
         if kind == 'medkit':
@@ -156,10 +214,15 @@ class WorldRenderer:
             surface.blit(self.pipe, (x - 24, y - 25))
 
     def draw(self, surface, state, hover):
+        self.configure(state)
+        if state.map_id in self.layered_maps:
+            return self.draw_layered(surface, state, hover)
+        style = self.environment.style(state.map_id)
+        placements = self.environment.placements(state, style) if style is not None else []
         surface.fill(BG)
         for row in range(state.grid.height):
             for col in range(state.grid.width):
-                self.tile(surface, (col, row), state)
+                self.tile(surface, (col, row), state, style)
         path = state.preview_path(hover) if hover is not None else list(state.route)
         budget = state.player.ap if state.mode == 'combat' else len(path)
         for index, cell in enumerate(path):
@@ -171,6 +234,9 @@ class WorldRenderer:
         layers = []
         for cell in state.grid.blocked:
             layers.append((self.projection.center(cell)[1], 0, cell, None))
+        for placement in placements:
+            cell = tuple(placement['cell'])
+            layers.append((self.projection.center(cell)[1], 1, cell, placement))
         for obj in state.objects:
             if obj['id'] not in state.collected:
                 layers.append((self.projection.center(tuple(obj['cell']))[1], 1, tuple(obj['cell']), obj))
@@ -179,16 +245,87 @@ class WorldRenderer:
                 continue
             role = 'vera' if unit.id == state.player.id else ('boss' if unit.boss else 'guard')
             if unit.id not in self.actors:
-                self.actors[unit.id] = WorldActor(unit, self.frames[role])
+                self.actors[unit.id] = WorldActor(unit, self.frames[role], self.anchors[role])
             actor = self.actors[unit.id]
             actor.sync(state, self.projection)
             layers.append((actor.foot[1], 2, unit.cell, actor))
         # Desempate por capa y casilla: sin dependencia del orden de sets/dicts.
         for _, layer, cell, value in sorted(layers, key=lambda item: (item[0], item[1], item[2])):
             if layer == 0:
-                self.wall(surface, cell)
+                self.wall(surface, cell, style)
             elif layer == 1:
-                self.prop(surface, value, state)
+                if 'frame' in value:
+                    self.environment.blit(surface, value['frame'], self.projection.center(cell))
+                else:
+                    self.prop(surface, value, state, style)
             else:
                 value.draw(surface)
+        return path, min(len(path), budget)
+
+
+    def draw_layered(self, surface, state, hover):
+        surface.fill(BG)
+        art, projection = self.layered_maps[state.map_id], self.projection
+        art.blit_base(surface)
+        path = state.preview_path(hover) if hover is not None else list(state.route)
+        budget = state.player.ap if state.mode == 'combat' else len(path)
+        previous = projection.center(state.player.cell)
+        for index, cell in enumerate(path):
+            point = projection.center(cell)
+            color = WATER if index < budget else AMBER
+            pygame.draw.line(surface, color, previous, point, 2)
+            pygame.draw.circle(surface, color, point, 2)
+            previous = point
+        if hover in art.layout.nodes:
+            pygame.draw.polygon(surface, TEXT, self.diamond(hover), 1)
+        layers = [(layer['screen_depth'], 1, layer['id'], layer) for layer in art.layers]
+        # La nota existente conserva su regla e identidad, con marcador discreto.
+        for obj in state.objects:
+            if obj['id'] not in state.collected:
+                layers.append((projection.center(tuple(obj['cell']))[1], 0, obj['id'], obj))
+        for unit in [state.player, *state.enemies.values()]:
+            if unit.hp <= 0:
+                continue
+            role = 'vera' if unit.id == state.player.id else ('boss' if unit.boss else 'guard')
+            if unit.id not in self.actors:
+                frames, anchors = {}, {}
+                for facing in ('front', 'rear'):
+                    source = self.frames[role][facing]
+                    # Mantener la escala relativa aprobada del jefe, no igualar
+                    # todas las siluetas ni deformar su arma para encajarla.
+                    relative = source.get_height() / self.frames['vera'][facing].get_height()
+                    height = round(art.layout.data['actor_height'] * projection.scale * relative)
+                    factor = height / source.get_height()
+                    size = (round(source.get_width() * factor), height)
+                    frames[facing] = pygame.transform.smoothscale(source, size)
+                    anchors[facing] = tuple(round(v * factor) for v in self.anchors[role][facing])
+                self.actors[unit.id] = WorldActor(unit, frames, anchors)
+            actor = self.actors[unit.id]
+            actor.sync(state, projection)
+            layers.append((actor.foot[1], 2, unit.id, actor))
+        old_clip = surface.get_clip()
+        surface.set_clip(WORLD_RECT)
+        for _, kind, _, value in sorted(layers, key=lambda item: item[:3]):
+            if kind == 1:
+                art.blit_layer(surface, value)
+            elif kind == 2:
+                value.draw(surface)
+            else:
+                if state.map_id in ('puesto', 'planta'):
+                    self.prop(surface, value, state, {'kind': 'layered'})
+                else:
+                    x, y = projection.center(tuple(value['cell']))
+                    pygame.draw.circle(surface, AMBER, (round(x), round(y - 5)), 3)
+        if self.debug_navigation:
+            for route in art.layout.routes:
+                color = AMBER if route['stair'] else WATER
+                pygame.draw.lines(surface, color, False,
+                                  [projection.screen(p) for p in route['points']], 1)
+                for p in route['points']:
+                    pygame.draw.circle(surface, color, projection.screen(p), 2)
+            for route in art.layout.routes:
+                if route['stair']:
+                    x, y = projection.screen(route['points'][0])
+                    self.type.text(surface, route['id'].replace('escalera_', ''), (x, y), 18, TEXT)
+        surface.set_clip(old_clip)
         return path, min(len(path), budget)

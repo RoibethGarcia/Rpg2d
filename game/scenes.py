@@ -77,6 +77,7 @@ class PlayScene(Scene):
         self.type = Typography()
         self.renderer = WorldRenderer(game)
         self.hover_cell = None
+        self._context = None
         self.buttons = [
             make_button(game, 28, 693, 166, 46, 'Llave · 2 PA / 4', lambda: self.command('attack')),
             make_button(game, 206, 693, 178, 46, 'Potente · 3 PA / 7', lambda: self.command('attack', True)),
@@ -89,6 +90,13 @@ class PlayScene(Scene):
     def reset(self):
         self.hover_cell = None
         self.renderer.reset()
+        state = self.game.state
+        self._context = (id(state), state.context_revision) if state is not None else None
+
+    def _sync_context(self):
+        state = self.game.state
+        if self._context != (id(state), state.context_revision):
+            self.reset()
 
     def to_menu(self):
         self.game.sound('back')
@@ -96,10 +104,13 @@ class PlayScene(Scene):
 
     def command(self, name, *args):
         result = getattr(self.game.state, name)(*args)
+        self._sync_context()
         self.game.sound('confirm' if result.ok else 'error')
         return result
 
     def handle_events(self, events):
+        self._sync_context()
+        self.renderer.configure(self.game.state)
         state = self.game.state
         for event in events:
             if event.type == pygame.MOUSEMOTION:
@@ -130,18 +141,27 @@ class PlayScene(Scene):
                     self.command('end_turn')
                 elif event.key == pygame.K_e:
                     self.command('interact')
+                elif event.key == pygame.K_F3:
+                    self.renderer.debug_navigation = not self.renderer.debug_navigation
 
     def update(self, dt):
+        self._sync_context()
         self.game.state.update(dt)
 
     def draw(self, surface):
+        self._sync_context()
         state = self.game.state
         path, reachable = self.renderer.draw(surface, state, self.hover_cell)
+        # Señales explícitas y provisionales; el render modular se hará en la tarea 5 de la fase 0.
+        for exit in state.world.exits.values():
+            color = AMBER if exit.requires and exit.requires not in state.opened else WATER
+            pygame.draw.polygon(surface, color, self.renderer.diamond(exit.cell), 3)
+            x, y = self.renderer.projection.center(exit.cell)
+            self.type.text(surface, f'E: {state.maps[exit.destination].name}', (x - 35, y - 34), 18, color)
         pygame.draw.rect(surface, PANEL, (0, 0, 1008, 90))
         self.type.text(surface, 'LA ÚLTIMA VÁLVULA', (28, 20), 34)
-        self.type.text(surface, '01  Acceso industrial', (28, 63), 20, AMBER)
-        self.type.text(surface, '02  Patio de distribución', (354, 63), 20, AMBER)
-        self.type.text(surface, '03  Sala de control', (720, 63), 20, AMBER)
+        self.type.text(surface, state.world.name, (28, 63), 20, AMBER)
+        self.type.text(surface, 'Suelo conectado · F3: rutas' if state.map_id in self.renderer.layered_maps else 'E vecino: viajar', (430, 63), 20, MUTED)
         mode = 'COMBATE' if state.mode == 'combat' else 'EXPLORACIÓN'
         self.type.text(surface, mode, (714, 25), 24, RED if state.mode == 'combat' else WATER)
         pygame.draw.rect(surface, PANEL, (1008, 0, 272, 800))
@@ -161,7 +181,7 @@ class PlayScene(Scene):
         t.text(surface, 'Credencial: ' + ('SÍ' if state.credential else 'NO'), (1034, 252), 24, WATER if state.credential else AMBER)
         pygame.draw.line(surface, EDGE, (1034, 290), (1248, 290))
         t.text(surface, 'OBJETIVO', (1034, 312), 24, AMBER)
-        objective = 'Activa con E el panel de la sala de control.' if state.credential else 'Cruza la planta y recupera la credencial del jefe.'
+        objective = 'Activa con E la válvula de la sala de control.' if state.credential else 'Cruza la planta y recupera la credencial del jefe.'
         t.wrapped(surface, objective, (1034, 347), 214, 24)
         enemy = state.enemies.get(state.active_enemy_id)
         hovered = next((u for u in state.enemies.values() if u.hp > 0 and u.cell == self.hover_cell), None)
@@ -192,7 +212,7 @@ class PlayScene(Scene):
             button.draw(surface)
         t.wrapped(surface, state.message or 'Busca suministros y avanza hacia la sala de control.', (28, 755), 952, 22, TEXT)
         # Procedencia visible: no se presentan las geometrías propias como pack terminado.
-        t.text(surface, 'Suelo y maquinaria: geometría provisional', (28, 611), 18, MUTED)
+        t.text(surface, 'Ilustración por capas · F3: navegación' if state.map_id in self.renderer.layered_maps else 'Escenarios: módulos de atlas · layout provisional', (28, 611), 18, MUTED)
 
 
 class TerminalScene(Scene):

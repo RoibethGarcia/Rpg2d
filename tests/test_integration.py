@@ -59,7 +59,8 @@ class InputSceneIntegrationTests(unittest.TestCase):
         self.click((640, 440))
         self.assertIs(self.game.current_scene, self.game.scenes['play'])
         original = self.game.state
-        self.assertEqual((original.player.hp, len(original.enemies), original.medkits), (30, 4, 1))
+        self.assertEqual((original.player.hp, len(original.enemies), original.medkits), (30, 0, 1))
+        self.assertEqual(sum(len(world.enemies) for world in original.maps.values()), 6)
         # Una orden real queda pendiente antes de abandonar la partida.
         self.key(pygame.K_d)
         self.assertIn('vera', original.motions)
@@ -131,7 +132,8 @@ class InputSceneIntegrationTests(unittest.TestCase):
         self.assertIs(self.game.current_scene, self.game.scenes['menu'])
         self.click((640, 440))
         self.assertEqual(self.game.state.player.hp, 30)
-        self.assertEqual(len(self.game.state.enemies), 4)
+        self.assertEqual(self.game.state.map_id, 'hondonada')
+        self.assertEqual(sum(len(world.enemies) for world in self.game.state.maps.values()), 6)
 
     def test_boss_fixture_ui_kill_panel_victory_and_terminal_new_game(self):
         state = encounter_fixture(hp=4, boss=True)
@@ -166,7 +168,7 @@ class ImportAndResourceIntegrationTests(unittest.TestCase):
         code = ("import sys; sys.path.insert(0, sys.argv[1]); import pygame; "
                 "from game.app import LastValveGame; "
                 "g=LastValveGame(audio_enabled=False); g.start_new_game(); "
-                "assert len(g.state.enemies)==4; assert len(g.assets.images)>=3; "
+                "assert g.state.map_id=='hondonada'; assert sum(len(w.enemies) for w in g.state.maps.values())==6; assert len(g.assets.images)>=3; "
                 "g.draw_game_elements(); pygame.quit()")
         with tempfile.TemporaryDirectory() as cwd:
             result = subprocess.run([sys.executable, '-c', code, str(ROOT)], cwd=cwd,

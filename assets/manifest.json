@@ -17,7 +17,8 @@
       "license_file": "assets/licenses/CC0-1.0.txt",
       "original_path": "isometric_character_template_2023_06_16/cycles/template-front-stand.gif",
       "modifications": "None; original native-resolution standing frame. Runtime scaling/tint may be applied.",
-      "sha256": "9e1fff4caec72c21885ad19b1a1935e64f516c688eda9f765d2417975d98c2c7"
+      "sha256": "9e1fff4caec72c21885ad19b1a1935e64f516c688eda9f765d2417975d98c2c7",
+      "usage": "legacy_reference_not_used_for_active_characters"
     },
     "human_rear": {
       "path": "assets/images/human_rear.gif",
@@ -35,7 +36,8 @@
       "license_file": "assets/licenses/CC0-1.0.txt",
       "original_path": "isometric_character_template_2023_06_16/cycles/template-rear-stand.gif",
       "modifications": "None; original native-resolution standing frame. Runtime scaling/tint may be applied.",
-      "sha256": "b4634da2653579af6d9e55b31bfbfe68fe44151cb1d7000f0b131d505e1b9abc"
+      "sha256": "b4634da2653579af6d9e55b31bfbfe68fe44151cb1d7000f0b131d505e1b9abc",
+      "usage": "legacy_reference_not_used_for_active_characters"
     },
     "pipes": {
       "path": "assets/images/pipes.png",
@@ -60,6 +62,316 @@
       "original_path": "Isometric_Pipes.png",
       "modifications": "None; complete original sheet, frame coordinates only. Derived art remains CC-BY-SA-4.0.",
       "sha256": "0dca00280b2e9819f142878780cde96e94ce6dc868c26d48a80ee4777a1b6296"
+    },
+    "vera_front": {
+      "path": "assets/images/characters/vera_front.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "frame": [
+        412,
+        40,
+        573,
+        1172
+      ],
+      "anchor": [
+        222,
+        1102
+      ],
+      "render_height": 64,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-10-19.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/user-supplied-characters.md",
+      "original_path": "Mecánica superviviente con llave inglesa.png",
+      "modifications": "Original PNG bytes unchanged. Runtime subrect and proportional smoothscale only; no color tint.",
+      "sha256": "d7a824847cf2673db7ac9446030407284cec013ed3881f723438c93aad17e310"
+    },
+    "vera_rear": {
+      "path": "assets/images/characters/vera_rear.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "frame": [
+        314,
+        40,
+        547,
+        1149
+      ],
+      "anchor": [
+        364,
+        1112
+      ],
+      "render_height": 64,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-10-19.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/user-supplied-characters.md",
+      "original_path": "Imagen de ChatGPT 19 oct 2026, 11_54_50.png",
+      "modifications": "Original PNG bytes unchanged. Runtime subrect and proportional smoothscale only; no color tint.",
+      "sha256": "68ed561662cf5ff6742c6f87b96d5a35a8fa4195dd1bd462391f61479338a93b"
+    },
+    "guard_front": {
+      "path": "assets/images/characters/guard_front.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "frame": [
+        345,
+        47,
+        701,
+        1177
+      ],
+      "anchor": [
+        293,
+        1103
+      ],
+      "render_height": 64,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-10-19.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/user-supplied-characters.md",
+      "original_path": "Imagen de ChatGPT 19 oct 2026, 11_54_02-1.png",
+      "modifications": "Original PNG bytes unchanged. Runtime subrect and proportional smoothscale only; no color tint.",
+      "sha256": "49f5676e1fe6df1aa8610760282b850e7ffc697ca4efb311e87f0d745b3715c5"
+    },
+    "guard_rear": {
+      "path": "assets/images/characters/guard_rear.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "frame": [
+        216,
+        56,
+        718,
+        1145
+      ],
+      "anchor": [
+        490,
+        1108
+      ],
+      "render_height": 64,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-10-19.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/user-supplied-characters.md",
+      "original_path": "Imagen de ChatGPT 19 oct 2026, 11_54_02-2.png",
+      "modifications": "Original PNG bytes unchanged. Runtime subrect and proportional smoothscale only; no color tint.",
+      "sha256": "30761fc9ed43992144b98b9007cd822ed07fd0f27ee78a011181ca11a866aaea"
+    },
+    "boss_front": {
+      "path": "assets/images/characters/boss_front.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "frame": [
+        220,
+        35,
+        913,
+        1205
+      ],
+      "anchor": [
+        365,
+        1141
+      ],
+      "render_height": 72,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-10-19.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/user-supplied-characters.md",
+      "original_path": "Imagen de ChatGPT 19 oct 2026, 11_52_25-1.png",
+      "modifications": "Original PNG bytes unchanged. Runtime subrect and proportional smoothscale only; no color tint.",
+      "sha256": "ad2dd40b531ce230ffc3dbabfdb834ed029b6cd8c900c0fd1ad45a7195cda81f"
+    },
+    "boss_rear": {
+      "path": "assets/images/characters/boss_rear.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "frame": [
+        44,
+        9,
+        1143,
+        1215
+      ],
+      "anchor": [
+        776,
+        1180
+      ],
+      "render_height": 72,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-10-19.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/user-supplied-characters.md",
+      "original_path": "Imagen de ChatGPT 19 oct 2026, 11_52_26-2.png",
+      "modifications": "Original PNG bytes unchanged. Runtime subrect and proportional smoothscale only; no color tint.",
+      "sha256": "4363fc82d43b01541c6cbf93880a0a122d0587a13c1cd0860f7d5104fc3ec8be"
+    },
+    "environment_atlas": {
+      "path": "assets/images/environments/scenario_atlas.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "frame": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "anchor": [
+        627,
+        1254
+      ],
+      "source_type": "ai_generated",
+      "source": "Generated with image_gen.imagegen from the three scenario references supplied by the user on 2026-10-19.",
+      "author": "AI-generated with OpenAI image generation; not attributed to a human artist.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/scenario-assets.md",
+      "prompt_file": "assets/provenance/scenario-atlas-prompt.md",
+      "references": [
+        {
+          "path": "assets/reference/scenarios/hondonada.png",
+          "sha256": "0caa874784d4c72fb2157aa7f67e7cd0271b01292bea14938a587cbb723eee7b",
+          "source_type": "user_supplied"
+        },
+        {
+          "path": "assets/reference/scenarios/puesto.png",
+          "sha256": "231af261fd3b339d62f6ee9cbee136327cad6bd772db8755e3fd393c88e25678",
+          "source_type": "user_supplied"
+        },
+        {
+          "path": "assets/reference/scenarios/planta.png",
+          "sha256": "dc42ee5f51724d7596e413de8dd4077ed88f207e9e8e3df9b231db472d146472",
+          "source_type": "user_supplied"
+        }
+      ],
+      "original_path": "Generated scenario_atlas.png (original output bytes)",
+      "modifications": "Original generated PNG bytes unchanged. Runtime explicit subrects, proportional scaling for modules, floor remap/mask to 48x24 only.",
+      "sha256": "c0d05847b334edd2cee168a7a2b00b75c0afe8fb8169ca32dadae6605647d032"
+    },
+    "hondonada_plate": {
+      "path": "assets/images/environments/hondonada_clean.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "frame": [
+        0,
+        0,
+        1448,
+        1086
+      ],
+      "anchor": [
+        724,
+        1086
+      ],
+      "background": "opaque_black",
+      "usage": "layered_environment_plate",
+      "source_type": "ai_generated",
+      "source": "Edited with image_gen.imagegen from the exact La Hondonada illustration supplied by the user on 2026-10-19.",
+      "author": "AI-edited with OpenAI image generation; not attributed to a human artist.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/hondonada-layered.md",
+      "prompt_file": "assets/provenance/hondonada-clean-prompt.md",
+      "references": [
+        {
+          "path": "assets/reference/scenarios/hondonada.png",
+          "sha256": "0caa874784d4c72fb2157aa7f67e7cd0271b01292bea14938a587cbb723eee7b",
+          "source_type": "user_supplied"
+        }
+      ],
+      "original_path": "exec-00edbb56-7c95-43fc-b4ae-ea56a96bcd38.png (original image_gen output bytes)",
+      "modifications": "Original generated PNG bytes unchanged; requested removal of the embedded plaza character. Runtime cached foreground polygon crops preserve registration; no offline image edits.",
+      "sha256": "66f3860cbc13438dd0159ce4197f33753620bce22d8d01329d06720b54fede85"
+    },
+    "puesto_plate": {
+      "path": "assets/images/environments/puesto-clean.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "frame": [
+        0,
+        0,
+        1448,
+        1086
+      ],
+      "anchor": [
+        724,
+        1086
+      ],
+      "background": "opaque_black",
+      "usage": "layered_environment_plate",
+      "source_type": "ai_generated",
+      "source": "Edited with image_gen.imagegen from the exact Puesto illustration supplied by the user on 2026-10-19.",
+      "author": "AI-edited with OpenAI image generation; not attributed to a human artist.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/puesto-layered.md",
+      "prompt_file": "assets/provenance/puesto-clean-prompt.md",
+      "references": [
+        {
+          "path": "assets/reference/scenarios/puesto.png",
+          "sha256": "231af261fd3b339d62f6ee9cbee136327cad6bd772db8755e3fd393c88e25678",
+          "source_type": "user_supplied"
+        }
+      ],
+      "original_path": "exec-f34b61ef-5603-4eba-a191-51a62a9f5eab.png (original image_gen output bytes)",
+      "modifications": "Original generated PNG bytes unchanged; requested removal of all five embedded guards. Navigation and foreground crops are authored separately for the resulting plate; no offline image edits.",
+      "sha256": "c485ecfa422a61a1d99b70a737cdf890b4d86b3d142b62a84d73a285470b6242"
+    },
+    "planta_plate": {
+      "path": "assets/images/environments/planta-clean-v2.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "source_type": "ai_generated",
+      "source": "OpenAI image_gen; object-removal edit of user-supplied planta.png, 2026-10-20.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/planta-layered.md",
+      "original_path": "planta.png",
+      "modifications": "AI object-removal edit of tiny painted figure near the entry yard. Runtime proportional scaling and foreground polygon masks. Original reference preserved; pixel-identical preservation outside the edit is not guaranteed.",
+      "sha256": "5e41533d928cca4ebe122cd40f1470a2bc73ff00a2400b19c8fa02e613dce860",
+      "usage": "layered_environment_plate",
+      "background": "opaque_black",
+      "prompt_file": "assets/provenance/planta-clean-prompt.md",
+      "references": [
+        {
+          "path": "assets/reference/scenarios/planta.png",
+          "source_type": "user_supplied",
+          "sha256": "dc42ee5f51724d7596e413de8dd4077ed88f207e9e8e3df9b231db472d146472"
+        }
+      ],
+      "derivation_steps": [
+        {
+          "path": "assets/images/environments/planta-clean.png",
+          "sha256": "8ff25723f4c4a4805beedda2990430480d1159765d73a85e6e6c6dc2a71b0984",
+          "usage": "intermediate_not_loaded"
+        },
+        {
+          "path": "assets/images/environments/planta-clean-v2.png",
+          "sha256": "5e41533d928cca4ebe122cd40f1470a2bc73ff00a2400b19c8fa02e613dce860",
+          "usage": "active_plate"
+        }
+      ]
     }
   },
   "sounds": {
@@ -112,27 +424,27 @@
     "floor": {
       "rendering": "pygame-code",
       "author": "Rpg2d project",
-      "reason": "Temporary geometry, not an integrated external pack."
+      "reason": "Explicit legacy fixture only; campaign uses generated atlas textures plus intentional Pygame diamond underlay."
     },
     "wall": {
       "rendering": "pygame-code",
       "author": "Rpg2d project",
-      "reason": "Temporary geometry, not an integrated external pack."
+      "reason": "Explicit legacy fixture only; campaign uses scenario atlas modules."
     },
     "pump": {
       "rendering": "pygame-code",
       "author": "Rpg2d project",
-      "reason": "Temporary geometry, not an integrated external pack."
+      "reason": "Explicit legacy fixture only; campaign uses scenario atlas modules."
     },
     "tank": {
       "rendering": "pygame-code",
       "author": "Rpg2d project",
-      "reason": "Temporary geometry, not an integrated external pack."
+      "reason": "Explicit legacy fixture only; campaign uses scenario atlas modules."
     },
     "panel": {
       "rendering": "pygame-code",
       "author": "Rpg2d project",
-      "reason": "Temporary geometry, not an integrated external pack."
+      "reason": "Explicit legacy fixture only; campaign uses scenario atlas modules."
     },
     "credential": {
       "rendering": "pygame-code",
@@ -142,12 +454,17 @@
     "medkit": {
       "rendering": "pygame-code",
       "author": "Rpg2d project",
-      "reason": "Temporary geometry, not an integrated external pack."
+      "reason": "Explicit legacy fixture only; campaign uses scenario atlas modules."
     },
     "key": {
       "rendering": "pygame-code",
       "author": "Rpg2d project",
       "reason": "Temporary geometry, not an integrated external pack."
+    },
+    "note": {
+      "rendering": "pygame-code",
+      "author": "Rpg2d project",
+      "reason": "Radio/register note marker remains intentionally provisional in campaign and legacy."
     }
   },
   "not_integrated": {
@@ -155,6 +472,660 @@
       "source": "https://screamingbrainstudios.itch.io/isotilepack",
       "license": "CC0-1.0",
       "reason": "HTTP 429; no further requests"
+    }
+  },
+  "environment_frames": {
+    "village_floor": {
+      "frame": [
+        14,
+        166,
+        293,
+        159
+      ],
+      "anchor": [
+        146.5,
+        79.5
+      ],
+      "render_width": 48,
+      "kind": "floor"
+    },
+    "village_wall": {
+      "frame": [
+        341,
+        118,
+        256,
+        198
+      ],
+      "anchor": [
+        128.0,
+        196
+      ],
+      "render_width": 48,
+      "kind": "module"
+    },
+    "kiosk": {
+      "frame": [
+        627,
+        50,
+        299,
+        276
+      ],
+      "anchor": [
+        149.5,
+        274
+      ],
+      "render_width": 48,
+      "kind": "module"
+    },
+    "market": {
+      "frame": [
+        958,
+        60,
+        274,
+        263
+      ],
+      "anchor": [
+        137.0,
+        261
+      ],
+      "render_width": 48,
+      "kind": "module"
+    },
+    "checkpoint_floor": {
+      "frame": [
+        14,
+        481,
+        294,
+        161
+      ],
+      "anchor": [
+        147.0,
+        80.5
+      ],
+      "render_width": 48,
+      "kind": "floor"
+    },
+    "barrier": {
+      "frame": [
+        361,
+        478,
+        222,
+        165
+      ],
+      "anchor": [
+        111.0,
+        163
+      ],
+      "render_width": 48,
+      "kind": "module"
+    },
+    "booth": {
+      "frame": [
+        652,
+        329,
+        258,
+        312
+      ],
+      "anchor": [
+        129.0,
+        310
+      ],
+      "render_width": 100,
+      "kind": "module"
+    },
+    "crates": {
+      "frame": [
+        969,
+        430,
+        256,
+        203
+      ],
+      "anchor": [
+        128.0,
+        201
+      ],
+      "render_width": 96,
+      "kind": "module"
+    },
+    "factory_floor": {
+      "frame": [
+        14,
+        794,
+        294,
+        159
+      ],
+      "anchor": [
+        147.0,
+        79.5
+      ],
+      "render_width": 48,
+      "kind": "floor"
+    },
+    "pipe_wall": {
+      "frame": [
+        351,
+        699,
+        252,
+        234
+      ],
+      "anchor": [
+        126.0,
+        232
+      ],
+      "render_width": 48,
+      "kind": "module"
+    },
+    "tank": {
+      "frame": [
+        685,
+        647,
+        212,
+        309
+      ],
+      "anchor": [
+        106.0,
+        307
+      ],
+      "render_width": 100,
+      "kind": "module"
+    },
+    "pump": {
+      "frame": [
+        950,
+        710,
+        282,
+        237
+      ],
+      "anchor": [
+        141.0,
+        235
+      ],
+      "render_width": 116,
+      "kind": "module"
+    },
+    "medkit": {
+      "frame": [
+        100,
+        1072,
+        119,
+        117
+      ],
+      "anchor": [
+        59.5,
+        115
+      ],
+      "render_width": 22,
+      "kind": "module"
+    },
+    "panel": {
+      "frame": [
+        356,
+        979,
+        209,
+        219
+      ],
+      "anchor": [
+        104.5,
+        217
+      ],
+      "render_width": 32,
+      "kind": "module"
+    },
+    "valve": {
+      "frame": [
+        658,
+        1027,
+        240,
+        168
+      ],
+      "anchor": [
+        120.0,
+        166
+      ],
+      "render_width": 38,
+      "kind": "module"
+    },
+    "rails": {
+      "frame": [
+        945,
+        1028,
+        297,
+        175
+      ],
+      "anchor": [
+        148.5,
+        173
+      ],
+      "render_width": 48,
+      "kind": "module"
+    }
+  },
+  "environment_sets": {
+    "hondonada": {
+      "floor": "village_floor",
+      "wall": "village_wall",
+      "underlay": [
+        100,
+        86,
+        62
+      ],
+      "placements": [
+        {
+          "frame": "kiosk",
+          "cell": [
+            0,
+            4
+          ],
+          "footprint": [
+            [
+              0,
+              4
+            ]
+          ]
+        },
+        {
+          "frame": "market",
+          "cell": [
+            0,
+            8
+          ],
+          "footprint": [
+            [
+              0,
+              8
+            ]
+          ]
+        },
+        {
+          "frame": "kiosk",
+          "cell": [
+            0,
+            12
+          ],
+          "footprint": [
+            [
+              0,
+              12
+            ]
+          ]
+        },
+        {
+          "frame": "market",
+          "cell": [
+            5,
+            0
+          ],
+          "footprint": [
+            [
+              5,
+              0
+            ]
+          ]
+        },
+        {
+          "frame": "kiosk",
+          "cell": [
+            11,
+            0
+          ],
+          "footprint": [
+            [
+              11,
+              0
+            ]
+          ]
+        },
+        {
+          "frame": "market",
+          "cell": [
+            18,
+            0
+          ],
+          "footprint": [
+            [
+              18,
+              0
+            ]
+          ]
+        }
+      ]
+    },
+    "puesto": {
+      "floor": "checkpoint_floor",
+      "wall": "barrier",
+      "underlay": [
+        76,
+        74,
+        66
+      ],
+      "placements": [
+        {
+          "frame": "booth",
+          "cell": [
+            5,
+            7
+          ],
+          "footprint": [
+            [
+              3,
+              5
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              4,
+              7
+            ],
+            [
+              5,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              5,
+              7
+            ]
+          ]
+        },
+        {
+          "frame": "crates",
+          "cell": [
+            12,
+            5
+          ],
+          "footprint": [
+            [
+              10,
+              3
+            ],
+            [
+              10,
+              4
+            ],
+            [
+              10,
+              5
+            ],
+            [
+              11,
+              3
+            ],
+            [
+              11,
+              4
+            ],
+            [
+              11,
+              5
+            ],
+            [
+              12,
+              3
+            ],
+            [
+              12,
+              4
+            ],
+            [
+              12,
+              5
+            ]
+          ]
+        },
+        {
+          "frame": "crates",
+          "cell": [
+            12,
+            12
+          ],
+          "footprint": [
+            [
+              10,
+              10
+            ],
+            [
+              10,
+              11
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              11,
+              10
+            ],
+            [
+              11,
+              11
+            ],
+            [
+              11,
+              12
+            ],
+            [
+              12,
+              10
+            ],
+            [
+              12,
+              11
+            ],
+            [
+              12,
+              12
+            ]
+          ]
+        }
+      ]
+    },
+    "planta": {
+      "floor": "factory_floor",
+      "wall": "pipe_wall",
+      "underlay": [
+        53,
+        58,
+        58
+      ],
+      "placements": [
+        {
+          "frame": "tank",
+          "cell": [
+            12,
+            5
+          ],
+          "footprint": [
+            [
+              10,
+              3
+            ],
+            [
+              10,
+              4
+            ],
+            [
+              10,
+              5
+            ],
+            [
+              11,
+              3
+            ],
+            [
+              11,
+              4
+            ],
+            [
+              11,
+              5
+            ],
+            [
+              12,
+              3
+            ],
+            [
+              12,
+              4
+            ],
+            [
+              12,
+              5
+            ]
+          ]
+        },
+        {
+          "frame": "pump",
+          "cell": [
+            12,
+            12
+          ],
+          "footprint": [
+            [
+              10,
+              10
+            ],
+            [
+              10,
+              11
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              11,
+              10
+            ],
+            [
+              11,
+              11
+            ],
+            [
+              11,
+              12
+            ],
+            [
+              12,
+              10
+            ],
+            [
+              12,
+              11
+            ],
+            [
+              12,
+              12
+            ]
+          ]
+        },
+        {
+          "frame": "pump",
+          "cell": [
+            5,
+            7
+          ],
+          "footprint": [
+            [
+              3,
+              5
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              4,
+              7
+            ],
+            [
+              5,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              5,
+              7
+            ]
+          ]
+        },
+        {
+          "frame": "tank",
+          "cell": [
+            21,
+            6
+          ],
+          "footprint": [
+            [
+              19,
+              4
+            ],
+            [
+              19,
+              5
+            ],
+            [
+              19,
+              6
+            ],
+            [
+              20,
+              4
+            ],
+            [
+              20,
+              5
+            ],
+            [
+              20,
+              6
+            ],
+            [
+              21,
+              4
+            ],
+            [
+              21,
+              5
+            ],
+            [
+              21,
+              6
+            ]
+          ]
+        }
+      ]
     }
   }
 }

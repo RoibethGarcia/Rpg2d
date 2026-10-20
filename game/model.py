@@ -1,8 +1,13 @@
 """Estado de partida y comandos independientes de la presentación."""
 from dataclasses import dataclass, field
-from game.world import GridMap, Cell, DIRECTIONS, distance
+from game.world import GridMap, Cell, DIRECTIONS
 from game.config import (TURN_AP, STEP_DURATION, BASIC_DAMAGE, POWER_DAMAGE, BASIC_COST,
                          POWER_COST, HEAL_AMOUNT, HEAL_COST, ENEMY_ATTACK_COST, ENEMY_ACTION_DELAY)
+
+def _valid_cell(cell):
+    return (isinstance(cell, tuple) and len(cell) == 2
+            and all(type(value) is int for value in cell))
+
 
 @dataclass(frozen=True)
 class ActionResult:
@@ -29,29 +34,116 @@ class Motion:
     elapsed: float = 0
     duration: float = STEP_DURATION
 
+@dataclass(frozen=True)
+class MapExit:
+    id: str
+    cell: Cell
+    destination: str
+    spawn: Cell
+    requires: str | None = None
+
+
 @dataclass
-class GameState:
+class MapState:
+    """Mundo persistente por partida; no contiene otra Vera ni inventario."""
     grid: GridMap
-    player: Unit
     enemies: dict[str, Unit] = field(default_factory=dict)
     objects: list[dict] = field(default_factory=list)
     patrols: dict = field(default_factory=dict)
-    mode: str = 'exploration'
-    turn: str = 'player'
-    active_enemy_id: str | None = None
-    medkits: int = 1
-    credential: bool = False
-    message: str = ''
-    motions: dict[str, Motion] = field(default_factory=dict)
-    route: list[Cell] = field(default_factory=list)
     collected: set[str] = field(default_factory=set)
     opened: set[str] = field(default_factory=set)
+    patrol_wait: dict = field(default_factory=dict)
+    patrol_index: dict = field(default_factory=dict)
+    clock: float = 0
+    name: str = 'Mapa de prueba'
+    exits: dict[str, MapExit] = field(default_factory=dict)
+    reserved_spawns: set[Cell] = field(default_factory=set)
 
-    _pending_direction: Cell | None = None
-    _clock: float = 0
-    _enemy_wait: float = 0
-    _patrol_wait: dict = field(default_factory=dict)
-    _patrol_index: dict = field(default_factory=dict)
+    def spawn_available(self, cell):
+        return (_valid_cell(cell) and cell in self.reserved_spawns and self.grid.walkable(cell)
+                and not any(u.hp > 0 and u.cell == cell for u in self.enemies.values())
+                and not any(tuple(o['cell']) == cell and
+                            (o.get('blocking') or o['kind'] in ('panel', 'pump', 'tank'))
+                            for o in self.objects))
+
+
+class GameState:
+    """Fachada de comandos; cada propiedad de mundo delega al mapa activo."""
+    def __init__(self, grid, player, enemies=None, objects=None, patrols=None,
+                 *, message='', maps=None, map_id='legacy'):
+        self.player = player
+        self.maps = maps if maps is not None else {
+            map_id: MapState(grid, enemies if enemies is not None else {},
+                             objects if objects is not None else [],
+                             patrols if patrols is not None else {})}
+        self.map_id = map_id
+        self.context_revision = 0
+        self.mode = 'exploration'
+        self.turn = 'player'
+        self.active_enemy_id = None
+        self.medkits = 1
+        self.credential = False
+        self.message = message
+        self.motions = {}
+        self.route = []
+        self._pending_direction = None
+        self._enemy_wait = 0
+
+    @property
+    def world(self):
+        return self.maps[self.map_id]
+
+    @property
+    def grid(self):
+        return self.world.grid
+
+    @property
+    def enemies(self):
+        return self.world.enemies
+
+    @enemies.setter
+    def enemies(self, value):
+        self.world.enemies = value
+
+    @property
+    def objects(self):
+        return self.world.objects
+
+    @objects.setter
+    def objects(self, value):
+        self.world.objects = value
+
+    @property
+    def patrols(self):
+        return self.world.patrols
+
+    @patrols.setter
+    def patrols(self, value):
+        self.world.patrols = value
+
+    @property
+    def collected(self):
+        return self.world.collected
+
+    @property
+    def opened(self):
+        return self.world.opened
+
+    @property
+    def _patrol_wait(self):
+        return self.world.patrol_wait
+
+    @property
+    def _patrol_index(self):
+        return self.world.patrol_index
+
+    @property
+    def _clock(self):
+        return self.world.clock
+
+    @_clock.setter
+    def _clock(self, value):
+        self.world.clock = value
 
     @classmethod
     def new(cls):
@@ -78,7 +170,7 @@ class GameState:
         if self.player.id in self.motions:
             self._pending_direction = delta
             return self._result(True, 'Dirección preparada después del paso actual')
-        target = (self.player.cell[0] + delta[0], self.player.cell[1] + delta[1])
+        target = self.grid.direction_target(self.player.cell, delta)
         return self._start_step(self.player, target)
 
     def set_destination(self, cell):
@@ -119,7 +211,7 @@ class GameState:
         return result
 
     def _start_step(self, unit, target):
-        if unit.hp <= 0 or unit.id in self.motions or distance(unit.cell, target) != 1 or not self.grid.walkable(target):
+        if unit.hp <= 0 or unit.id in self.motions or not self.grid.can_step(unit.cell, target):
             return self._result(False, 'Destino bloqueado')
         # Reservas y actores en tránsito son bloqueos ordinarios, no contacto.
         if any(m.end == target for uid, m in self.motions.items() if uid != unit.id):
@@ -154,7 +246,7 @@ class GameState:
             return self._result(False, 'Ataque no disponible: espera tu turno y detén el movimiento')
         enemy = self.enemies[self.active_enemy_id]
         cost = POWER_COST if power else BASIC_COST
-        if enemy.hp <= 0 or distance(self.player.cell, enemy.cell) != 1:
+        if enemy.hp <= 0 or not self.grid.can_step(self.player.cell, enemy.cell):
             return self._result(False, 'El enemigo debe estar en una casilla vecina')
         if self.player.ap < cost:
             return self._result(False, 'PA insuficientes')
@@ -200,7 +292,7 @@ class GameState:
         enemy = self.enemies[self.active_enemy_id]
         if enemy.hp <= 0:
             return
-        if distance(enemy.cell, self.player.cell) == 1:
+        if self.grid.can_step(enemy.cell, self.player.cell):
             if enemy.ap >= ENEMY_ATTACK_COST:
                 enemy.ap -= ENEMY_ATTACK_COST
                 self.player.hp = max(0, self.player.hp - enemy.damage)
@@ -219,13 +311,74 @@ class GameState:
         self.player.ap = TURN_AP
         self.message = 'Turno de Vera: 6 PA'
 
+    def validate_campaign(self):
+        """Rechaza datos inseguros en carga; nunca inventa una aparición alternativa."""
+        if self.map_id not in self.maps:
+            raise ValueError('Mapa activo inexistente')
+        for map_id, world in self.maps.items():
+            if (world.grid.width, world.grid.height) != (24, 16):
+                raise ValueError(f'{map_id}: se requiere una rejilla 24×16')
+            if any(not _valid_cell(c) or not world.grid.in_bounds(c) for c in world.grid.blocked):
+                raise ValueError(f'{map_id}: obstáculo fuera de la rejilla')
+            if not world.reserved_spawns:
+                raise ValueError(f'{map_id}: faltan apariciones reservadas')
+            for cell in world.reserved_spawns:
+                if not _valid_cell(cell) or not world.spawn_available(cell):
+                    raise ValueError(f'{map_id}: aparición reservada inválida {cell}')
+            for uid, patrol in world.patrols.items():
+                cells = [tuple(c) for c in patrol['cells']]
+                if (uid not in world.enemies or not cells
+                        or any(not _valid_cell(c) or not world.grid.walkable(c)
+                               or c in world.reserved_spawns for c in cells)
+                        or any(not world.grid.can_step(a, b) for a, b in zip(cells, cells[1:] + cells[:1]))):
+                    raise ValueError(f'{map_id}: patrulla inválida {uid}')
+            for exit_id, exit in world.exits.items():
+                destination = self.maps.get(exit.destination)
+                if (exit.id != exit_id or not _valid_cell(exit.cell) or not world.grid.walkable(exit.cell)
+                        or destination is None or not _valid_cell(exit.spawn)
+                        or not destination.spawn_available(exit.spawn)
+                        or not any(world.grid.can_step(c, exit.cell) for c in world.reserved_spawns)
+                        or (exit.requires and not any(o['id'] == exit.requires and o['kind'] == 'maintenance'
+                                                     for o in world.objects))):
+                    raise ValueError(f'{map_id}: salida inválida {exit_id}')
+        if (not _valid_cell(self.player.cell) or not self.world.spawn_available(self.player.cell)):
+            raise ValueError('Aparición inicial de Vera inválida')
+
+    def travel(self, exit_id):
+        """Viaje atómico: validar todo antes de cambiar el mapa activo."""
+        if (self.mode != 'exploration' or not self._player_allowed()
+                or self.motions or self.route or self._pending_direction is not None):
+            return self._result(False, 'Viaja solo en exploración y sin pasos ni rutas pendientes')
+        exit = self.world.exits.get(exit_id)
+        if (exit is None or not _valid_cell(exit.cell) or not self.grid.walkable(exit.cell)
+                or not self.grid.can_step(self.player.cell, exit.cell)):
+            return self._result(False, 'Acércate a una casilla vecina de la salida')
+        if exit.requires and exit.requires not in self.opened:
+            return self._result(False, 'La salida exige abrir el acceso de mantenimiento')
+        destination = self.maps.get(exit.destination)
+        if destination is None or not destination.spawn_available(exit.spawn):
+            return self._result(False, 'Datos de viaje inválidos: aparición no disponible')
+        self.route.clear()
+        self.motions.clear()
+        self._pending_direction = None
+        self.active_enemy_id = None
+        self._enemy_wait = 0
+        self.map_id = exit.destination
+        self.context_revision += 1
+        self.player.cell = exit.spawn
+        return self._result(True, f'{destination.name}. Vida y recursos conservados.')
+
     def interact(self):
-        if self.mode != 'exploration' or not self._player_allowed() or self.player.id in self.motions or self.route:
+        if (self.mode != 'exploration' or not self._player_allowed()
+                or self.player.id in self.motions or self.route or self._pending_direction is not None):
             return self._result(False, 'Interactúa fuera de combate y sin moverte')
+        for exit_id, exit in self.world.exits.items():
+            if self.grid.can_step(self.player.cell, exit.cell):
+                return self.travel(exit_id)
         priorities = {'medkit': 0, 'maintenance': 1, 'mechanism': 2, 'panel': 3, 'note': 4}
         for obj in sorted(self.objects, key=lambda o: priorities.get(o['kind'], 5)):
             oid, kind, cell = obj['id'], obj['kind'], tuple(obj['cell'])
-            if oid in self.collected or oid in self.opened or distance(self.player.cell, cell) > 1:
+            if oid in self.collected or oid in self.opened or (self.player.cell != cell and not self.grid.can_step(self.player.cell, cell)):
                 continue
             if kind == 'medkit':
                 self.medkits += 1
@@ -236,7 +389,9 @@ class GameState:
             elif kind == 'mechanism':
                 self.opened.add(oid)
             elif kind == 'panel':
-                if distance(self.player.cell, cell) != 1:
+                if self.motions:
+                    return self._result(False, 'Espera a que terminen los pasos antes de activar el suministro')
+                if not self.grid.can_step(self.player.cell, cell):
                     return self._result(False, 'Colócate en una casilla vecina al panel')
                 if not self.credential:
                     return self._result(False, 'El panel exige la credencial del jefe')
