@@ -82,8 +82,8 @@ class CombatTests(unittest.TestCase):
         self.assertTrue(s.attack(power=True))
         self.assertEqual((s.enemies['guard'].hp, s.player.ap), (2, 0))
         self.assertFalse(s.attack())
-        self.assertEqual(s.mode, 'combat')  # Nunca termina turno automáticamente.
-        s.end_turn()
+        self.assertEqual((s.mode, s.turn), ('combat', 'enemy'))
+        self.assertFalse(s.end_turn())  # El cierre automático ya cedió el turno.
         for _ in range(100):
             s.update(.02)
         self.assertEqual((s.turn, s.player.ap, s.player.hp), ('player', 6, 21))
@@ -115,7 +115,8 @@ class CombatTests(unittest.TestCase):
         self.assertEqual((s.player.cell, s.player.ap), ((2, 4), 0))
         self.assertFalse(s.route)
         self.assertFalse(s.move_direction((0, 1)))
-        self.assertTrue(s.end_turn())
+        self.assertEqual(s.turn, 'enemy')
+        self.assertFalse(s.end_turn())
         self.assertFalse(s.attack())
         for _ in range(150):
             s.update(.02)

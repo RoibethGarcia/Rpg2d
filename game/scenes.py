@@ -3,6 +3,8 @@ import pygame
 from engine.ui import Scene, Button
 from game.render import (Typography, WorldRenderer, WORLD_RECT, BG, PANEL,
                          EDGE, TEXT, MUTED, WATER, AMBER, RED, bar)
+from game.dialogue import DialogueView
+from game.model import ActionResult
 
 
 class ClickCue:
@@ -76,6 +78,7 @@ class PlayScene(Scene):
         super().__init__(game)
         self.type = Typography()
         self.renderer = WorldRenderer(game)
+        self.dialogue_view = DialogueView(game)
         self.hover_cell = None
         self._context = None
         self.buttons = [
@@ -91,6 +94,8 @@ class PlayScene(Scene):
         self.hover_cell = None
         self.renderer.reset()
         state = self.game.state
+        if state is not None:
+            state.last_attacks.clear()
         self._context = (id(state), state.context_revision) if state is not None else None
 
     def _sync_context(self):
@@ -103,7 +108,14 @@ class PlayScene(Scene):
         self.game.change_scene('menu')
 
     def command(self, name, *args):
-        result = getattr(self.game.state, name)(*args)
+        self._sync_context()
+        state = self.game.state
+        if (name in ('attack', 'heal', 'end_turn', 'move_direction', 'set_destination', 'interact')
+                and self.renderer.attack_active(state)):
+            state.message = 'Espera a que termine la animación del ataque.'
+            result = ActionResult(False, state.message)
+        else:
+            result = getattr(state, name)(*args)
         self._sync_context()
         self.game.sound('confirm' if result.ok else 'error')
         return result
@@ -113,6 +125,21 @@ class PlayScene(Scene):
         self.renderer.configure(self.game.state)
         state = self.game.state
         for event in events:
+            if state.active_dialogue is not None:
+                # La ventana captura TODO el input de partida: ningún clic o
+                # tecla de avance llega a botones, rutas ni interacciones.
+                if event.type == pygame.KEYDOWN and not getattr(event, 'repeat', False):
+                    if event.key == pygame.K_ESCAPE:
+                        self.command('close_dialogue')
+                    elif event.key in (pygame.K_e,pygame.K_RETURN,pygame.K_SPACE):
+                        self.command('advance_dialogue')
+                elif (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1
+                      and self.dialogue_view.continue_rect.collidepoint(event.pos)):
+                    self.command('advance_dialogue')
+                if state.active_dialogue is None:
+                    self.hover_cell = None
+                    return  # También consume el resto del lote al cerrar.
+                continue
             if event.type == pygame.MOUSEMOTION:
                 self.hover_cell = self.renderer.projection.pick(*event.pos) if WORLD_RECT.collidepoint(event.pos) else None
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -210,9 +237,12 @@ class PlayScene(Scene):
             combat_only = button in self.buttons[:4]
             button.color = (49, 65, 71) if not combat_only or state.mode == 'combat' else (34, 43, 47)
             button.draw(surface)
-        t.wrapped(surface, state.message or 'Busca suministros y avanza hacia la sala de control.', (28, 755), 952, 22, TEXT)
+        if state.active_dialogue is None:
+            t.wrapped(surface, state.message or 'Busca suministros y avanza hacia la sala de control.', (28, 755), 952, 22, TEXT)
         # Procedencia visible: no se presentan las geometrías propias como pack terminado.
         t.text(surface, 'Ilustración por capas · F3: navegación' if state.map_id in self.renderer.layered_maps else 'Escenarios: módulos de atlas · layout provisional', (28, 611), 18, MUTED)
+        if state.active_dialogue is not None:
+            self.dialogue_view.draw(surface,state.active_dialogue)
 
 
 class TerminalScene(Scene):

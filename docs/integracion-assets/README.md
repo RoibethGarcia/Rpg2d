@@ -7,11 +7,14 @@ seis documentos permiten ejecutar las fases por separado. Después de la entrega
 documental se incorporó un **reemplazo parcial independiente**: los seis PNG
 estáticos de Vera, guardias y jefe ya se cargan y dibujan desde el proyecto.
 Ese reemplazo no implementó campaña. El incremento posterior ya añade los tres
-mapas provisionales persistentes y viajes reversibles; NPC, arena y animaciones
-siguen pendientes. Los incrementos visuales posteriores integraron Hondonada,
+mapas provisionales persistentes y viajes reversibles; la arena lateral
+sigue pendiente. Los incrementos visuales posteriores integraron Hondonada,
 puesto y planta sobre sus ilustraciones por capas, con caminos y escaleras
 autorados. La planta ya incluye tres guardias, jefe y válvula final. La fase 0
-NO está completa: arena lateral, NPC y animaciones continúan pendientes.
+NO está completa: arena lateral y caminar continúan pendientes. Hondonada ya
+incorpora dos aldeanos estáticos con conversación modal y marco industrial (21/10/2026).
+El usuario autorizó comenzar **ataques**: primer incremento one-shot de Vera,
+guardias y jefe, sin arena ni caminar; [estado y límites reales](../ATAQUES.md).
 
 La historia sigue siendo restablecer el agua de La Hondonada. El cambio autorizado
 es de alcance y presentación, no un requisito nuevo de la consigna ni una solución
@@ -22,10 +25,10 @@ proporcionada por el curso. Consultar [diseño vigente](../../HistoriaYMecanicas
 | Aspecto | Implementado actualmente, inspeccionado | Objetivo aprobado, pendiente |
 | --- | --- | --- |
 | Mundo | Tres ilustraciones con grafos autorados sobre rejilla lógica 24×16; Hondonada ↔ puesto ↔ planta, E vecino y mantenimiento para avanzar | Aceptación manual de dificultad y presentación |
-| Habitantes/enemigos | Sin aldeanos; dos guardias en puesto, tres y jefe en planta | Dos aldeanos y animaciones |
+| Habitantes/enemigos | Dos aldeanos estáticos con diálogo; dos guardias en puesto, tres y jefe en planta | Animaciones y aceptación manual |
 | Combate | 1 contra 1 en la rejilla de exploración | 1 contra 1 en arena lateral de 12 casillas |
 | Estado | Campaña con una Vera/inventario/credencial y colección de `MapState`; viajes no restauran recursos | Encuentro separado de exploración |
-| Arte humano | Seis PNG exclusivos frente/espalda de Vera, guardias y jefe; sin tintes, escala proporcional y anclas por vista | NPC, animaciones y configuración adicional por contexto |
+| Arte humano | Seis PNG frente/espalda y tres hojas de ataques de Vera, guardias y jefe; anclas y escala corporal proporcional | Caminar y aceptación manual del ritmo |
 | Nuevos PNG | Seis originales estáticos copiados sin edición y cargados desde el proyecto; procedencia y hashes registrados | Ampliar módulos básicos ya integrados, aldeano, interfaz y animaciones; confirmar redistribución |
 
 Las diferencias con los documentos de la primera iteración son intencionales.
@@ -37,10 +40,10 @@ funcionalidades futuras como terminadas.
 | Fase | Documento | Dependencias | Estado de implementación |
 | --- | --- | --- | --- |
 | 0 | [Base compartida](00-base-compartida.md) | Código actual y este acuerdo | Parcial: tareas 1–2 automatizadas; 3–6 pendientes |
-| 1 | [La Hondonada](01-la-hondonada.md) | Fase 0 aceptada | Escenario por capas y escaleras; NPC/diálogos y aceptación completa pendientes |
+| 1 | [La Hondonada](01-la-hondonada.md) | Fase 0 aceptada | Escenario por capas, escaleras, dos NPC y diálogo modal implementados; aceptación manual pendiente |
 | 2 | [Puesto de control](02-puesto-de-control.md) | Fases 0–1 aceptadas | Ilustración, dos patrullas y combate in situ implementados; arena lateral pendiente |
 | 3 | [Planta final](03-planta-final.md) | Fases 0–2 aceptadas | Ilustración, tres guardias+jefe, kits, credencial/válvula y recorrido automatizado implementados; aceptación manual pendiente |
-| 4 | [Animaciones y cierre](04-animaciones-y-cierre.md) | Recorrido estático de fases 0–3 aceptado | Pendiente |
+| 4 | [Animaciones y cierre](04-animaciones-y-cierre.md) | Plan completo: recorrido estático aceptado | Incremento independiente de ataques implementado por petición del usuario; caminar/cierre pendientes |
 
 Ejecutar **0 → 1 → 2 → 3 → 4**. La fase 0 entrega los tres destinos provisionales
 y la arena mínima, para que cada escenario posterior sea un incremento comprobable.
@@ -58,7 +61,7 @@ estados distintos. No cambiar las reglas comunes desde un escenario aislado.
 
 Ubicación de consulta: `/Users/roibethgarcia/Downloads/`. Son los nombres exactos
 aportados por el usuario, **no rutas de carga del juego**. Los seis originales
-estáticos ya tienen copias en `assets/images/characters/`; las tres referencias de escenario ya están copiadas en `assets/reference/scenarios/` y respaldan un atlas generado; los restantes siguen pendientes. Conservar originales y registrar los derivados al incorporarlos.
+estáticos ya tienen copias en `assets/images/characters/`; las tres referencias de escenario ya están copiadas en `assets/reference/scenarios/` y respaldan un atlas generado; las tres hojas de ataque también están copiadas e integradas; los restantes siguen pendientes. Conservar originales y registrar los derivados al incorporarlos.
 El fondo negro de la previsualización no debe convertirse automáticamente en
 colorkey: validar el alfa de cada archivo y preservar detalles oscuros.
 

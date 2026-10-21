@@ -29,6 +29,12 @@ class ContentTests(unittest.TestCase):
 
 class FullPlaythroughTests(unittest.TestCase):
     """Fixture original y campaña completa por comandos públicos, sin recursos adulterados."""
+    def finish_player_turn(self, state):
+        if state.turn == 'player':
+            self.assertTrue(state.end_turn(), state.message)
+        else:
+            self.assertEqual((state.turn, state.player.ap), ('enemy', 0))
+
     def tick_until_player_idle(self, state):
         for _ in range(500):
             if state.player.id not in state.motions and not state.route:
@@ -94,7 +100,7 @@ class FullPlaythroughTests(unittest.TestCase):
                 if state.mode == 'exploration':
                     break
                 self.retreat(state, ring, 3)
-            self.assertTrue(state.end_turn(), state.message)
+            self.finish_player_turn(state)
             for _ in range(500):
                 state.update(.02)
                 if state.turn == 'player' or state.mode == 'defeat':
@@ -107,7 +113,7 @@ class FullPlaythroughTests(unittest.TestCase):
         for _ in range(2):
             self.assertTrue(state.attack(power=True), state.message)
             self.retreat(state, ring, 3)
-            self.assertTrue(state.end_turn())
+            self.finish_player_turn(state)
             for _ in range(500):
                 state.update(.02)
                 if state.turn == 'player' or state.mode == 'defeat':
@@ -127,7 +133,7 @@ class FullPlaythroughTests(unittest.TestCase):
         for _ in range(4):
             if state.mode != 'combat':
                 break
-            self.assertTrue(state.end_turn())
+            self.finish_player_turn(state)
             for _ in range(500):
                 state.update(.02)
                 if state.turn == 'player' or state.mode == 'defeat':

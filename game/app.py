@@ -53,7 +53,13 @@ class LastValveGame(GameLoop):
         self.sound('confirm')
 
     def change_scene(self, scene_name):
+        if self.current_scene is self.scenes['play'] and scene_name != 'play':
+            self.scenes['play'].reset()
         self.current_scene = self.scenes[scene_name]
+
+    def stop(self):
+        self.scenes['play'].reset()
+        super().stop()
 
     def handle_specific_events(self, event):
         self.current_scene.handle_events([event])

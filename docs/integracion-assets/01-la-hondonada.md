@@ -1,8 +1,31 @@
 # Fase 1 — La Hondonada
 
-**Estado: incremento de escenario por capas y escaleras; fase completa pendiente.** [Índice](README.md) ·
+**Estado: escenario por capas, escaleras y dos aldeanos con diálogo implementados;
+aceptación manual completa pendiente.** [Índice](README.md) ·
 [Contrato obligatorio: base compartida](00-base-compartida.md) ·
 [Siguiente: puesto](02-puesto-de-control.md).
+
+## Incremento de aldeanos y ventana industrial — 21/10/2026
+
+- `villager_plaza` en `(16,1)` y `villager_terrace` en `(6,2)` reutilizan el
+  artesano con taza. Son hojas de suelo del grafo: su ocupación no corta el
+  camino principal, la radio ni la salida al puesto.
+- Bloquean su casilla mediante ocupación lógica, no destruyendo el grafo.
+  E desde un vecino conectado abre dos páginas propias. No tienen vida, PA,
+  patrulla, combate, misiones ni recompensas.
+- `GameState.active_dialogue` conserva la conversación abierta; `MapState.talked_to`
+  registra por ID los habitantes visitados. Repetir comienza desde la primera
+  página; viajar conserva historial y una nueva partida lo reinicia.
+- La ventana reutiliza el marco y retrato de la imagen aportada. Se retiraron
+  las letras incrustadas mediante `image_gen`; nombre, páginas y botón son texto
+  dinámico de Pygame, dentro de regiones declaradas en el manifest.
+- Durante la conversación se pausa la simulación y se bloquea gameplay. E,
+  Enter, Espacio o botón avanzan; la última página cierra. Escape cierra sin
+  mover a Vera. El clic no atraviesa al mundo ni al menú de la partida.
+- [Procedencia](../../assets/provenance/villager-dialogue.md) y
+  [prompt exacto](../../assets/provenance/dialogue-frame-prompt.md). Originales
+  conservados sin editar; redistribución pendiente. Las pruebas/capturas de SDL
+  dummy no reemplazan partida manual nativa ni audio audible.
 
 ## Objetivo y dependencias
 
@@ -41,7 +64,7 @@ independiente. No prometer una espalda del aldeano que no fue compartida.
   el plano uniforme por anclas/polígonos de superficie y conectividad explícita.
   Las conexiones autoradas unen caminos, terrazas y escaleras; estar cerca en
   pantalla o ser vecinos numéricos NO autoriza cruzar muros/desniveles.
-  Radio y salida al puesto deben seguir alcanzables. Los NPC siguen pendientes.
+  Radio y salida al puesto siguen alcanzables con los NPC ocupando sus casillas.
 - Dos NPC estáticos bloquean su casilla para Vera y pathfinding. Interacción E
   desde un vecino lógico muestra un mensaje breve; ni caminar contra ellos ni
   pulsar E inicia encuentros. Cada uno debe tener al menos un vecino accesible.
@@ -98,7 +121,12 @@ F3 alterna la superposición de rutas y nombres de escaleras para diagnóstico;
 inicia apagada y no modifica la navegación ni el bitmap. Las líneas del overlay
 no sustituyen la revisión visual de que el cuerpo de Vera coincide con el suelo.
 
-## Resto de fase 1: tareas todavía pendientes
+## Plan original y estado de aceptación
+
+Las tareas de NPC, ocupación, diálogo y assets de abajo están implementadas y
+automatizadas en `tests/test_villagers.py`. Los módulos descritos en el plan se
+sustituyeron por la ilustración por capas autorizada. Queda la aceptación manual
+de todos los recorridos, presentación y sonido; no se declara completada aquí.
 
 1. Escribir RED para carga de `hondonada`, ausencia de enemigos, dos NPC únicos y
    alcanzabilidad de radio, vecinos de NPC y salida con sus bloqueos reales.

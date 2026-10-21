@@ -3,6 +3,7 @@ import pygame
 from engine.game_object import GameObject
 from game.world import Projection
 from game.environment import EnvironmentArt, LayeredEnvironmentArt
+from game.animation import isolate_attack_frames, prepare_attack_clip
 
 BG = (17, 24, 29)
 PANEL = (26, 36, 42)
@@ -50,13 +51,14 @@ def bar(surface, rect, value, maximum, color):
 
 class WorldActor(GameObject):
     """Adaptador visual; la única casilla verdadera pertenece a Unit."""
-    def __init__(self, unit, frames, anchors):
+    def __init__(self, unit, frames, anchors, attack_clip=None):
         super().__init__(0, 0, frames['front'])
         self.unit = unit
         self.directions = frames
         self.anchors = anchors
         self.facing = 'front'
         self.foot = (0, 0)
+        self.attack_clip = attack_clip
 
     def sync(self, state, projection):
         self.foot = projection.center(self.unit.cell)
@@ -75,6 +77,14 @@ class WorldActor(GameObject):
         self.rect = self.image.get_rect()
         # Ancla local de cada vista ya escalada, independiente de la caja del arma.
         anchor = self.anchors[self.facing]
+        action = state.last_attacks.get(self.unit.id)
+        if action is not None and self.attack_clip is not None and state.mode == 'combat' and not motion:
+            target = projection.center(action.target_cell)
+            frame = self.attack_clip.sample(state.elapsed - action.occurred_at,
+                                            mirrored=target[0] < self.foot[0])
+            if frame is not None:
+                self.image, anchor = frame
+                self.rect = self.image.get_rect()
         self.rect.topleft = (round(self.foot[0] - anchor[0]), round(self.foot[1] - anchor[1]))
 
     def draw(self, surface):
@@ -93,12 +103,28 @@ class WorldActor(GameObject):
         bar(surface, pygame.Rect(round(x - 16), self.rect.top - 7, 32, 4), self.unit.hp, self.unit.max_hp, color)
 
 
+class WorldVillager(GameObject):
+    """Habitante estático sin barra de vida, PA, arma ni representación hostil."""
+    def __init__(self, npc, image, anchor, foot):
+        super().__init__(0, 0, image)
+        self.npc = npc
+        self.foot = foot
+        self.rect.topleft = (round(foot[0] - anchor[0]), round(foot[1] - anchor[1]))
+
+    def draw(self, surface):
+        x,y = self.foot
+        pygame.draw.ellipse(surface, (11,16,19), (x-9,y-3,18,6))
+        super().draw(surface)
+        pygame.draw.circle(surface, AMBER, (round(x), self.rect.top-5), 3, 1)
+
+
 class WorldRenderer:
     def __init__(self, game):
         self.game = game
         self.type = Typography()
         self.projection = Projection(48, 24, origin=(400, 110))
         self.actors = {}
+        self.villagers = {}
         self.environment = EnvironmentArt(game)
         self.hondonada = LayeredEnvironmentArt(game, WORLD_RECT)
         self.puesto = LayeredEnvironmentArt(game, WORLD_RECT, 'puesto')
@@ -109,6 +135,9 @@ class WorldRenderer:
         self._map_id = None
         self.frames = {}
         self.anchors = {}
+        record = game.manifest['images']['villager']
+        self.villager_source = game.assets.get_image('villager').subsurface(record['frame'])
+        self.villager_anchor = record['anchor']
         for role in ('vera', 'guard', 'boss'):
             self.frames[role] = {}
             self.anchors[role] = {}
@@ -125,17 +154,44 @@ class WorldRenderer:
                     round(record['anchor'][1] * size[1] / image.get_height()))
         record = game.manifest['images']['pipes']
         self.pipe = pygame.transform.scale(game.assets.get_image('pipes').subsurface(record['frame']), (48, 48))
+        self.attack_clips = {}
+        # Preparar todos los contextos al cargar; nada de I/O, máscaras o escalas por frame.
+        for role in ('vera', 'guard', 'boss'):
+            record = game.manifest['images'][f'{role}_attack']
+            sources = isolate_attack_frames(game.assets.get_image(f'{role}_attack'), record)
+            for map_id in ('legacy', *self.layered_maps):
+                height = self.frames[role]['front'].get_height()
+                if map_id in self.layered_maps:
+                    art = self.layered_maps[map_id]
+                    base = round(art.layout.data['actor_height'] * art.projection.scale)
+                    height *= base / self.frames['vera']['front'].get_height()
+                self.attack_clips[map_id, role] = prepare_attack_clip(sources, record, height)
+
+    def attack_active(self, state):
+        if state.mode != 'combat':
+            return False
+        for uid, action in state.last_attacks.items():
+            unit = state.player if uid == state.player.id else state.enemies.get(uid)
+            if unit is None or unit.hp <= 0:
+                continue
+            role = 'vera' if uid == state.player.id else ('boss' if unit.boss else 'guard')
+            clip = self.attack_clips[state.map_id, role]
+            if clip.frame_index(state.elapsed - action.occurred_at) is not None:
+                return True
+        return False
 
     def configure(self, state):
         map_id = state.map_id if state is not None else 'legacy'
         if map_id != self._map_id:
             self.actors.clear()
+            self.villagers.clear()
             self.projection = (self.layered_maps[map_id].projection if map_id in self.layered_maps
                                else Projection(48, 24, origin=(400, 110)))
             self._map_id = map_id
 
     def reset(self):
         self.actors.clear()
+        self.villagers.clear()
         self.configure(self.game.state)
 
     def diamond(self, cell):
@@ -245,7 +301,8 @@ class WorldRenderer:
                 continue
             role = 'vera' if unit.id == state.player.id else ('boss' if unit.boss else 'guard')
             if unit.id not in self.actors:
-                self.actors[unit.id] = WorldActor(unit, self.frames[role], self.anchors[role])
+                self.actors[unit.id] = WorldActor(unit, self.frames[role], self.anchors[role],
+                                                   self.attack_clips['legacy', role])
             actor = self.actors[unit.id]
             actor.sync(state, self.projection)
             layers.append((actor.foot[1], 2, unit.cell, actor))
@@ -282,7 +339,18 @@ class WorldRenderer:
         # La nota existente conserva su regla e identidad, con marcador discreto.
         for obj in state.objects:
             if obj['id'] not in state.collected:
-                layers.append((projection.center(tuple(obj['cell']))[1], 0, obj['id'], obj))
+                if obj['kind'] == 'npc':
+                    if obj['id'] not in self.villagers:
+                        height = round(art.layout.data['actor_height'] * projection.scale)
+                        source = self.villager_source
+                        factor = height / source.get_height()
+                        image = pygame.transform.smoothscale(source, (round(source.get_width()*factor),height))
+                        anchor = tuple(round(v*factor) for v in self.villager_anchor)
+                        self.villagers[obj['id']] = WorldVillager(obj, image, anchor, projection.center(obj['cell']))
+                    actor = self.villagers[obj['id']]
+                    layers.append((actor.foot[1], 2, obj['id'], actor))
+                else:
+                    layers.append((projection.center(tuple(obj['cell']))[1], 0, obj['id'], obj))
         for unit in [state.player, *state.enemies.values()]:
             if unit.hp <= 0:
                 continue
@@ -299,7 +367,8 @@ class WorldRenderer:
                     size = (round(source.get_width() * factor), height)
                     frames[facing] = pygame.transform.smoothscale(source, size)
                     anchors[facing] = tuple(round(v * factor) for v in self.anchors[role][facing])
-                self.actors[unit.id] = WorldActor(unit, frames, anchors)
+                self.actors[unit.id] = WorldActor(unit, frames, anchors,
+                                                   self.attack_clips[state.map_id, role])
             actor = self.actors[unit.id]
             actor.sync(state, projection)
             layers.append((actor.foot[1], 2, unit.id, actor))
@@ -327,5 +396,9 @@ class WorldRenderer:
                 if route['stair']:
                     x, y = projection.screen(route['points'][0])
                     self.type.text(surface, route['id'].replace('escalera_', ''), (x, y), 18, TEXT)
+        for npc in self.villagers.values():
+            if (state.interaction_distance(npc.npc['cell'], occupied_goal=True) in (1, 2)
+                    and state.active_dialogue is None):
+                self.type.text(surface, 'E: Hablar', (npc.foot[0]-25, npc.rect.top-22), 18, AMBER)
         surface.set_clip(old_clip)
         return path, min(len(path), budget)

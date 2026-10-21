@@ -478,3 +478,97 @@ locales ignorados por Git, no parte del código versionado. No se ejecutó una
 partida manual nativa ni se comprobó sonido audible. Siguen pendientes la arena
 lateral del plan original, animaciones y revisión humana de dificultad y todos
 los solapamientos. El portón cerrado y patio exterior inferior son decorativos.
+
+## Aldeanos y ventana de conversación — 21/10/2026
+
+### Implementación y TDD
+
+- RED: Hondonada no tenía NPC ni conversaciones; las nueve pruebas iniciales
+  fallaron por ausencia de los dos habitantes. GREEN: dos objetos `npc` estáticos,
+  ocupación bloqueante, interacción vecina y páginas sin recompensas.
+- `Dialogue` vive en el dominio y no importa Pygame. `DialogueView` presenta el
+  estado con el marco industrial aportado, limpiado mediante `image_gen` para
+  no incrustar una frase fija en todas las conversaciones. El sprite y la skin
+  se cargan desde el proyecto, no desde Downloads.
+- La conversación bloquea comandos de gameplay y pausa `update` sin acumular
+  tiempo. E/Enter/Espacio o clic avanza; Escape cierra; el último avance consume
+  el resto del lote de eventos para impedir movimiento o clics tras el cierre.
+- RED adicional: el texto aparecía duplicado en la tira inferior del HUD por
+  debajo de partes transparentes del marco. GREEN: la tira se omite mientras
+  está abierta la conversación, con regresión sobre `Typography.wrapped`.
+- Los NPC ocupan hojas `(16,1)` y `(6,2)`: no bloquean radio, escaleras principales
+  ni salida. Historial por ID en `MapState.talked_to`, conservado al viajar y
+  reiniciado con una nueva partida; no se comparten listas de páginas.
+
+### Pruebas realmente ejecutadas
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  .venv/bin/python -B -m unittest discover -s tests -v
+```
+
+**`Ran 150 tests in 23.668s`, `OK`, salida 0.** Catorce pruebas nuevas en
+`tests/test_villagers.py`: alcance/ocupación, rechazo lejos/en movimiento/en
+combate, páginas, captura modal, recursos inalterados, pausa, viaje/reset,
+caché/visibilidad, transparencia y ajuste de todas las páginas al marco.
+También pasan los recorridos previos de campaña completa y fixture legacy.
+`git diff --check`: sin errores. No se ejecutaron builds, compilación,
+`py_compile`, `compileall`, instalaciones ni commits.
+
+El recorrido nuevo conversa con ambos NPC y llega al puesto usando únicamente
+`set_destination`, `update`, `interact`, `advance_dialogue` y `travel`, sin
+teletransportar ni otorgar recursos desde la prueba: conserva **30 HP/6 PA/1 kit**.
+Una comprobación de siluetas iniciales midió **100 % de píxeles visibles** para
+cada aldeano; la regresión exige más de 65 %. No prueba todos los solapamientos.
+
+### Revisión visual y límites
+
+Capturas de la aplicación con SDL dummy, inspeccionadas a 1280×800:
+
+- [Habitantes en el pueblo](../artifacts/hondonada-villagers.png).
+- [Aldeano, primera página](../artifacts/villager_plaza-dialogue-1.png).
+- [Aldeano, segunda página](../artifacts/villager_plaza-dialogue-2.png).
+- [Artesano, primera página](../artifacts/villager_terrace-dialogue-1.png).
+- [Artesano, segunda página](../artifacts/villager_terrace-dialogue-2.png).
+
+Las conversaciones se capturaron después de llegar por comandos públicos. Son
+artefactos locales ignorados por Git. Se verificó el marco, retrato, texto,
+regiones seguras y ausencia de letras incrustadas; no se afirma una partida
+manual nativa ni sonido audible. Animaciones, arena lateral y permisos de
+redistribución siguen pendientes. Este incremento no añade tiendas, misiones,
+compañeros ni botiquines gratuitos.
+
+## Animaciones de ataque — 21/10/2026
+
+Primer incremento independiente: ataques de Vera, guardias y jefe **in situ**;
+no completa fase 4, caminar ni arena. [Contrato y ciclos RED/GREEN](ATAQUES.md).
+
+- Dirigidas: `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy .venv/bin/python -m unittest tests.test_attack_animation -q`:
+  **24 pruebas, 6.741 s, OK**, salida 0.
+- Suite global de integración previa a extender cobertura: `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy .venv/bin/python -m unittest discover -s tests -q`:
+  **183 pruebas, 31.066 s, OK**. No se presenta como verificación final del freeze.
+- QA independiente inspeccionó [12 recortes](../artifacts/attacks/poses.png),
+  [escala nativa/reflejos](../artifacts/attacks/qa-native-scale-poses.png) y capturas
+  de puesto/planta enlazadas en `ATAQUES.md`: sin contaminación, cortes o saltos
+  evidentes. Fixtures de escena autorada, no partida manual nativa ni sonido real.
+- QA detectó limpieza faltante al QUIT; corregida con override específico de app
+  y RED/GREEN dirigido. La prueba también demuestra que QUIT no queda bloqueado.
+- Golpes letales cancelan el clip al cerrar combate (comportamiento probado).
+  Duración .20 s preserva IA .22 s; legibilidad temporal pendiente del usuario.
+- Sin builds, instalaciones ni commits; originales inalterados y redistribución
+  pendiente. Los cambios locales anteriores del usuario se conservaron.
+
+### Freeze final — revisión independiente
+
+QA ejecutó después del freeze de código/tests/assets:
+
+```sh
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYGAME_HIDE_SUPPORT_PROMPT=1 \
+  .venv/bin/python -B -m unittest discover -s tests
+```
+
+**201 pruebas, 35.620 s, OK**, salida 0; incluye las **24 nuevas** de ataques y
+regresiones completas de campaña, auto-turn, alcance, diálogos y recursos.
+`git diff --check`: limpio. No quedaron hallazgos de código de este incremento.
+Se corrigió únicamente una frase heredada del README que decía que 0 PA no
+terminaba turno: el auto-turn preexistente sí lo hace tras acción válida.

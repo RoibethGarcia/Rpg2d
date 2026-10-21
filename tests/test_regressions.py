@@ -80,7 +80,7 @@ class StateRegressionTests(unittest.TestCase):
         self.assertNotIn('guard', state.motions)
         self.assertEqual(state.mode, 'exploration')
 
-    def test_no_automatic_turn_after_last_ap_and_only_completed_step_costs(self):
+    def test_automatic_turn_after_last_ap_and_only_completed_step_costs(self):
         state = self.combat()
         state.player.ap = 1
         self.assertTrue(state.move_direction((-1, 0)))
@@ -89,9 +89,10 @@ class StateRegressionTests(unittest.TestCase):
         self.assertEqual(state.player.ap, 1)
         state.update(.02)
         self.assertEqual((state.player.ap, state.player.cell), (0, (1, 2)))
-        state.update(3)
-        self.assertEqual((state.turn, state.player.hp, state.player.ap), ('player', 30, 0))
+        self.assertEqual(state.turn, 'enemy')
         self.assertFalse(state.move_direction((0, 1)))
+        state.update(3)
+        self.assertEqual((state.turn, state.player.hp, state.player.ap), ('player', 24, 6))
 
     def test_invalid_attacks_and_heals_are_atomic(self):
         state = self.combat()

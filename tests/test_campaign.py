@@ -90,7 +90,7 @@ class CampaignTests(unittest.TestCase):
     def test_invalid_travel_is_atomic_for_context_and_busy_states(self):
         from game.model import Motion
         for reason in ('combat', 'victory', 'defeat', 'enemy_turn', 'dead', 'route',
-                       'player_motion', 'patrol_motion', 'pending', 'far', 'on_exit', 'unknown'):
+                       'player_motion', 'patrol_motion', 'pending', 'far', 'unknown'):
             with self.subTest(reason=reason):
                 state = GameState.new()
                 state.player.cell = (4, 10)
@@ -109,8 +109,6 @@ class CampaignTests(unittest.TestCase):
                     state._pending_direction = (1, 0)
                 elif reason == 'far':
                     state.player.cell = (3, 10)
-                elif reason == 'on_exit':
-                    state.player.cell = (5, 10)
                 before = self.snapshot(state)
                 self.assertFalse(state.travel('missing' if reason == 'unknown' else 'to_puesto'))
                 self.assertEqual(self.snapshot(state), before)

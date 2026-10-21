@@ -191,7 +191,9 @@ restablecido, no con una suma de sobrantes y puntos nuevos.
 Vera puede combinar movimiento y habilidades en el orden que prefiera. Espacio
 termina su turno, aunque conserve PA. Después actúa el enemigo y vuelve a comenzar
 un turno de Vera. Durante el turno enemigo no se aceptan órdenes de movimiento o ataque.
-**No se termina automáticamente al llegar a 0 PA**; el jugador debe pulsar Espacio.
+**El turno termina automáticamente al llegar a 0 PA** tras una acción válida;
+en movimiento, al completar el último paso. Si el golpe derrota al enemigo,
+se vuelve a exploración sin cederle un turno. Espacio permite cederlo antes.
 Esta alternancia es la del núcleo inicial; no fija el orden de turnos de la ampliación.
 
 Una acción inválida o sin PA suficientes no consume puntos ni ítems y no produce

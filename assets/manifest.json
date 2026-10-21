@@ -372,6 +372,635 @@
           "usage": "active_plate"
         }
       ]
+    },
+    "villager": {
+      "path": "assets/images/characters/villager.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "anchor": [
+        245,
+        1135
+      ],
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/villager-dialogue.md",
+      "original_path": "Artesano del Yermo con Taza.png",
+      "modifications": "Original PNG bytes unchanged; runtime frame selection and proportional scaling only.",
+      "sha256": "5f22de8fdef676d2445ba744118a8562228c72c85ad7b438e1a3373442e27b28",
+      "frame": [
+        387,
+        56,
+        513,
+        1168
+      ],
+      "render_height": 64
+    },
+    "dialogue_frame": {
+      "path": "assets/images/ui/dialogue-frame.png",
+      "size": [
+        2172,
+        724
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "source_type": "ai_generated",
+      "source": "OpenAI image_gen edit of user-supplied dialogue window, 2026-10-21.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/villager-dialogue.md",
+      "original_path": "Imagen de ChatGPT 20 oct 2026, 00_25_56.png",
+      "modifications": "Removed all baked text and continue triangle; preserved portrait and industrial frame with transparent exterior. Runtime proportional scaling only.",
+      "sha256": "def9ad13a9b125ef8a151ac38355656295521d5d6bd37074e11c0f40c1c8572b",
+      "prompt_file": "assets/provenance/dialogue-frame-prompt.md",
+      "references": [
+        {
+          "path": "assets/reference/ui/dialogue-reference.png",
+          "source_type": "user_supplied",
+          "sha256": "e9d85387c00da7f1edb5c2d0f25c9f0a15c6b5317c53b9c9cd57c49eed43fc38"
+        }
+      ],
+      "layout": {
+        "name": [
+          640,
+          172,
+          470,
+          85
+        ],
+        "body": [
+          585,
+          310,
+          1400,
+          200
+        ],
+        "continue_button": [
+          1715,
+          505,
+          325,
+          70
+        ],
+        "hint": [
+          585,
+          535,
+          900,
+          45
+        ]
+      }
+    },
+    "vera_attack": {
+      "path": "assets/images/characters/vera_attack.png",
+      "size": [
+        2172,
+        724
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "source_type": "user_supplied",
+      "source": "Provided by the user in the project conversation on 2026-10-21.",
+      "author": "User-supplied ChatGPT image; authorship and redistribution rights not independently verified.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/combat-attacks.md",
+      "original_path": "Imagen de ChatGPT 19 oct 2026, 11_55_05.png",
+      "sha256": "a686c3547289a0b4c0382e65303bcfad913301716218f70f4e8ae75d8e88e4bd",
+      "modifications": "Original PNG bytes unchanged. Explicit runtime crop and isolation polygon retain interior RGBA; proportional scaling and horizontal reflection only.",
+      "body_height": 610,
+      "frames": [
+        {
+          "rect": [
+            24,
+            20,
+            436,
+            684
+          ],
+          "anchor": [
+            207,
+            648
+          ],
+          "duration": 0.06,
+          "isolation_polygon": [
+            [
+              0,
+              0
+            ],
+            [
+              435,
+              0
+            ],
+            [
+              435,
+              683
+            ],
+            [
+              0,
+              683
+            ]
+          ]
+        },
+        {
+          "rect": [
+            528,
+            70,
+            588,
+            630
+          ],
+          "anchor": [
+            216,
+            593
+          ],
+          "duration": 0.05,
+          "isolation_polygon": [
+            [
+              0,
+              0
+            ],
+            [
+              587,
+              0
+            ],
+            [
+              587,
+              480
+            ],
+            [
+              574,
+              520
+            ],
+            [
+              542,
+              570
+            ],
+            [
+              522,
+              629
+            ],
+            [
+              0,
+              629
+            ]
+          ]
+        },
+        {
+          "rect": [
+            1044,
+            106,
+            630,
+            594
+          ],
+          "anchor": [
+            233,
+            558
+          ],
+          "duration": 0.04,
+          "isolation_polygon": [
+            [
+              71,
+              0
+            ],
+            [
+              629,
+              0
+            ],
+            [
+              629,
+              593
+            ],
+            [
+              6,
+              593
+            ],
+            [
+              26,
+              534
+            ],
+            [
+              58,
+              484
+            ],
+            [
+              71,
+              444
+            ]
+          ]
+        },
+        {
+          "rect": [
+            1668,
+            67,
+            484,
+            637
+          ],
+          "anchor": [
+            202,
+            600
+          ],
+          "duration": 0.05,
+          "isolation_polygon": [
+            [
+              0,
+              0
+            ],
+            [
+              483,
+              0
+            ],
+            [
+              483,
+              636
+            ],
+            [
+              0,
+              636
+            ]
+          ]
+        }
+      ]
+    },
+    "guard_attack": {
+      "path": "assets/images/characters/guard_attack.png",
+      "size": [
+        2172,
+        724
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "source_type": "user_supplied",
+      "source": "Provided by the user in the project conversation on 2026-10-21.",
+      "author": "User-supplied ChatGPT image; authorship and redistribution rights not independently verified.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/combat-attacks.md",
+      "original_path": "Imagen de ChatGPT 19 oct 2026, 11_54_03-4.png",
+      "sha256": "74aa4b46df85285a3b5522ca47c0d93c11b46f55dcf3255dd3a3a5d2467d4871",
+      "modifications": "Original PNG bytes unchanged. Explicit runtime crop and isolation polygon retain interior RGBA; proportional scaling and horizontal reflection only.",
+      "body_height": 600,
+      "frames": [
+        {
+          "rect": [
+            39,
+            20,
+            491,
+            667
+          ],
+          "anchor": [
+            241,
+            630
+          ],
+          "duration": 0.06,
+          "isolation_polygon": [
+            [
+              0,
+              0
+            ],
+            [
+              490,
+              0
+            ],
+            [
+              490,
+              666
+            ],
+            [
+              0,
+              666
+            ]
+          ]
+        },
+        {
+          "rect": [
+            532,
+            66,
+            559,
+            620
+          ],
+          "anchor": [
+            221,
+            584
+          ],
+          "duration": 0.05,
+          "isolation_polygon": [
+            [
+              0,
+              0
+            ],
+            [
+              558,
+              0
+            ],
+            [
+              558,
+              414
+            ],
+            [
+              503,
+              454
+            ],
+            [
+              503,
+              619
+            ],
+            [
+              0,
+              619
+            ]
+          ]
+        },
+        {
+          "rect": [
+            1034,
+            87,
+            649,
+            600
+          ],
+          "anchor": [
+            214,
+            563
+          ],
+          "duration": 0.04,
+          "isolation_polygon": [
+            [
+              56,
+              0
+            ],
+            [
+              648,
+              0
+            ],
+            [
+              648,
+              399
+            ],
+            [
+              626,
+              399
+            ],
+            [
+              626,
+              599
+            ],
+            [
+              0,
+              599
+            ],
+            [
+              0,
+              433
+            ],
+            [
+              56,
+              393
+            ]
+          ]
+        },
+        {
+          "rect": [
+            1658,
+            63,
+            476,
+            624
+          ],
+          "anchor": [
+            222,
+            587
+          ],
+          "duration": 0.05,
+          "isolation_polygon": [
+            [
+              25,
+              0
+            ],
+            [
+              475,
+              0
+            ],
+            [
+              475,
+              623
+            ],
+            [
+              0,
+              623
+            ],
+            [
+              0,
+              423
+            ],
+            [
+              25,
+              423
+            ]
+          ]
+        }
+      ]
+    },
+    "boss_attack": {
+      "path": "assets/images/characters/boss_attack.png",
+      "size": [
+        2172,
+        724
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "source_type": "user_supplied",
+      "source": "Provided by the user in the project conversation on 2026-10-21.",
+      "author": "User-supplied ChatGPT image; authorship and redistribution rights not independently verified.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/combat-attacks.md",
+      "original_path": "Imagen de ChatGPT 19 oct 2026, 11_52_27-4.png",
+      "sha256": "0f6264d247588a59fa51ddd7d5bae3908b4327bb9864c9141fddb7c9e13e4a9d",
+      "modifications": "Original PNG bytes unchanged. Explicit runtime crop and isolation polygon retain interior RGBA; proportional scaling and horizontal reflection only.",
+      "body_height": 540,
+      "frames": [
+        {
+          "rect": [
+            25,
+            9,
+            453,
+            699
+          ],
+          "anchor": [
+            219,
+            659
+          ],
+          "duration": 0.06,
+          "isolation_polygon": [
+            [
+              0,
+              0
+            ],
+            [
+              452,
+              0
+            ],
+            [
+              452,
+              698
+            ],
+            [
+              0,
+              698
+            ]
+          ]
+        },
+        {
+          "rect": [
+            492,
+            88,
+            615,
+            617
+          ],
+          "anchor": [
+            235,
+            580
+          ],
+          "duration": 0.05,
+          "isolation_polygon": [
+            [
+              0,
+              0
+            ],
+            [
+              614,
+              0
+            ],
+            [
+              614,
+              507
+            ],
+            [
+              606,
+              537
+            ],
+            [
+              573,
+              562
+            ],
+            [
+              573,
+              616
+            ],
+            [
+              0,
+              616
+            ]
+          ]
+        },
+        {
+          "rect": [
+            1067,
+            140,
+            640,
+            584
+          ],
+          "anchor": [
+            225,
+            528
+          ],
+          "duration": 0.04,
+          "isolation_polygon": [
+            [
+              40,
+              0
+            ],
+            [
+              620,
+              0
+            ],
+            [
+              620,
+              320
+            ],
+            [
+              639,
+              360
+            ],
+            [
+              639,
+              430
+            ],
+            [
+              615,
+              475
+            ],
+            [
+              615,
+              583
+            ],
+            [
+              0,
+              583
+            ],
+            [
+              0,
+              510
+            ],
+            [
+              31,
+              485
+            ],
+            [
+              40,
+              455
+            ]
+          ]
+        },
+        {
+          "rect": [
+            1682,
+            140,
+            490,
+            570
+          ],
+          "anchor": [
+            209,
+            528
+          ],
+          "duration": 0.05,
+          "isolation_polygon": [
+            [
+              6,
+              0
+            ],
+            [
+              489,
+              0
+            ],
+            [
+              489,
+              569
+            ],
+            [
+              0,
+              569
+            ],
+            [
+              0,
+              475
+            ],
+            [
+              25,
+              430
+            ],
+            [
+              25,
+              360
+            ],
+            [
+              6,
+              320
+            ]
+          ]
+        }
+      ]
     }
   },
   "sounds": {

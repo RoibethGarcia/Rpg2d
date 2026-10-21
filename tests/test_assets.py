@@ -41,7 +41,7 @@ class AssetTests(unittest.TestCase):
                             self.assertTrue(entry['references'])
                             for reference in entry['references']:
                                 ref = (ROOT / reference['path']).resolve()
-                                self.assertTrue(ref.is_relative_to(ROOT / 'assets/reference/scenarios'))
+                                self.assertTrue(ref.is_relative_to(ROOT / 'assets/reference'))
                                 self.assertTrue(ref.is_file())
                                 self.assertEqual(reference['source_type'], 'user_supplied')
                                 self.assertEqual(hashlib.sha256(ref.read_bytes()).hexdigest(), reference['sha256'])

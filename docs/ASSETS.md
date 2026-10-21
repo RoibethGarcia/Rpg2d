@@ -178,3 +178,43 @@ con reglas, vida y patrullas, no humanos pintados como sustituto de gameplay.
 **Redistribución pendiente** de referencias y derivados; no se les atribuye una
 licencia libre. La edición no garantiza identidad píxel a píxel fuera del objetivo.
 Las capturas SDL dummy y pruebas no equivalen a jugar con audio nativo.
+
+## Aldeano y marco de diálogo industrial — 21/10/2026
+
+Se incorporan dos recursos activos:
+
+- **`villager`**: `assets/images/characters/villager.png`, copia sin editar del
+  artesano con taza (1254×1254 RGBA). Frame del cuerpo `[387,56,513,1168]`, ancla
+  entre botas `[245,1135]`; escala proporcional al pueblo, sin tinte ni una vista
+  trasera inventada. Dos NPC con IDs distintos reutilizan el mismo sprite.
+- **`dialogue_frame`**: `assets/images/ui/dialogue-frame.png`, 2172×724 RGBA,
+  derivado con la herramienta integrada `image_gen.imagegen`. Se retiraron nombre,
+  frase y «Continuar» incrustados, conservando retrato, tuberías, metal oxidado,
+  lámparas y telas. Exterior transparente; interior oscuro para texto dinámico.
+
+La referencia original de ventana se conserva sin edición en
+`assets/reference/ui/dialogue-reference.png`. El manifest registra hashes,
+procedencia y regiones seguras para nombre, texto, continuación e instrucciones.
+La prueba de referencias ahora admite `assets/reference/` (escenarios e interfaz),
+sin aceptar rutas externas al proyecto. No hay IO ni reescalado de la skin por frame.
+
+[Procedencia](../assets/provenance/villager-dialogue.md) ·
+[Prompt exacto](../assets/provenance/dialogue-frame-prompt.md).
+
+Los originales y el derivado tienen **redistribución pendiente de confirmación**;
+no se les atribuye CC0/BY-SA. El archivo del aldeano y la referencia se conservan
+sin modificar bytes. El prompt no garantiza identidad píxel a píxel del marco.
+
+## Ataques de combate — 21/10/2026
+
+Tres hojas originales suministradas (`vera_attack`, `guard_attack`, `boss_attack`)
+de 2172×724 RGBA, copiadas sin cambiar bytes en `assets/images/characters/`.
+El manifiesto añade hashes, rectángulos explícitos, polígonos de aislamiento,
+anclas, referencia corporal y duraciones. No se usa grilla uniforme ni colorkey
+negro; el alfa real y los colores interiores se conservan. Se preparan las dos
+orientaciones y escalas por mapa al cargar, sin I/O por frame.
+
+[Procedencia y derivación técnica](../assets/provenance/combat-attacks.md) ·
+[Alcance, pruebas y límites](ATAQUES.md). Derechos de redistribución **pendientes**,
+sin atribuirles la licencia de otros packs. No se incorporaron caminar ni ciclos
+traseros; los dos ataques lógicos de Vera reutilizan su única secuencia aportada.

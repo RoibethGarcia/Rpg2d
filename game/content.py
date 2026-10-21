@@ -30,8 +30,11 @@ def new_game():
     """Campaña independiente: tres ilustraciones con navegación autorada."""
     old = new_legacy_game()
     from game.hondonada import HondonadaLayout
-    hondonada = MapState(HondonadaLayout.load().grid(),
-                        objects=[old.objects[0]], name='La Hondonada')
+    village_layout = HondonadaLayout.load()
+    hondonada = MapState(village_layout.grid(),
+                        objects=[old.objects[0], *({**o, 'cell': tuple(o['cell'])}
+                                                  for o in village_layout.data['npcs'])],
+                        name='La Hondonada')
     puesto_layout = HondonadaLayout.load('puesto')
     for uid, cells in {'guard1': [[8,10],[9,10],[10,10],[9,10]],
                        'guard2': [[13,9],[14,9],[15,9],[14,9]]}.items():

@@ -34,6 +34,14 @@ class Motion:
     elapsed: float = 0
     duration: float = STEP_DURATION
 
+
+@dataclass(frozen=True)
+class AttackAction:
+    """Hecho lógico ya aplicado; jamás una orden de daño diferido."""
+    attacker_id: str
+    target_cell: Cell
+    occurred_at: float
+
 @dataclass(frozen=True)
 class MapExit:
     id: str
@@ -41,6 +49,19 @@ class MapExit:
     destination: str
     spawn: Cell
     requires: str | None = None
+
+
+@dataclass
+class Dialogue:
+    """Conversación activa, sin dependencias de píxeles o eventos de UI."""
+    npc_id: str
+    speaker: str
+    pages: tuple[str, ...]
+    index: int = 0
+
+    @property
+    def text(self):
+        return self.pages[self.index]
 
 
 @dataclass
@@ -58,6 +79,7 @@ class MapState:
     name: str = 'Mapa de prueba'
     exits: dict[str, MapExit] = field(default_factory=dict)
     reserved_spawns: set[Cell] = field(default_factory=set)
+    talked_to: set[str] = field(default_factory=set)
 
     def spawn_available(self, cell):
         return (_valid_cell(cell) and cell in self.reserved_spawns and self.grid.walkable(cell)
@@ -88,6 +110,18 @@ class GameState:
         self.route = []
         self._pending_direction = None
         self._enemy_wait = 0
+        self.active_dialogue = None
+        self.last_attacks = {}
+        self._simulation_time = 0
+
+    @property
+    def elapsed(self):
+        """Reloj continuo en segundos, incluida la fracción aún no simulada."""
+        return self._simulation_time + self._clock
+
+    def _record_attack(self, attacker, target, occurred_at):
+        self.last_attacks[attacker.id] = AttackAction(
+            attacker.id, target.cell, occurred_at)
 
     @property
     def world(self):
@@ -155,11 +189,16 @@ class GameState:
         return ActionResult(ok, message)
 
     def _player_allowed(self):
-        return self.mode in ('exploration', 'combat') and self.turn == 'player' and self.player.hp > 0
+        return (self.active_dialogue is None and self.mode in ('exploration', 'combat')
+                and self.turn == 'player' and self.player.hp > 0)
+
+    def blocking_objects(self):
+        return {tuple(o['cell']) for o in self.objects if o.get('blocking')}
 
     def occupied(self, exclude=None):
         units = [self.player, *self.enemies.values()]
         cells = {u.cell for u in units if u.hp > 0 and u.id != exclude}
+        cells.update(self.blocking_objects())
         cells.update(m.end for uid, m in self.motions.items() if uid != exclude)
         return cells
 
@@ -211,7 +250,8 @@ class GameState:
         return result
 
     def _start_step(self, unit, target):
-        if unit.hp <= 0 or unit.id in self.motions or not self.grid.can_step(unit.cell, target):
+        if (unit.hp <= 0 or unit.id in self.motions or not self.grid.can_step(unit.cell, target)
+                or target in self.blocking_objects()):
             return self._result(False, 'Destino bloqueado')
         # Reservas y actores en tránsito son bloqueos ordinarios, no contacto.
         if any(m.end == target for uid, m in self.motions.items() if uid != unit.id):
@@ -230,6 +270,7 @@ class GameState:
         return self._result(True, 'Movimiento')
 
     def _begin_combat(self, enemy):
+        self.last_attacks.clear()
         self.mode = 'combat'
         self.turn = 'player'
         self.active_enemy_id = enemy.id
@@ -253,7 +294,9 @@ class GameState:
         self.player.ap -= cost
         damage = POWER_DAMAGE if power else BASIC_DAMAGE
         enemy.hp = max(0, enemy.hp - damage)
+        self._record_attack(self.player, enemy, self.elapsed)
         if enemy.hp == 0:
+            self.last_attacks.clear()
             self.mode = 'exploration'
             self.active_enemy_id = None
             self.route.clear()
@@ -262,7 +305,10 @@ class GameState:
                 self.credential = True
                 return self._result(True, 'Jefe derrotado. Credencial recuperada: activa el panel con E.')
             return self._result(True, f'{enemy.name} derrotado. Conservas vida y recursos.')
-        return self._result(True, f'Golpe de Vera: {damage} de daño')
+        message = f'Golpe de Vera: {damage} de daño'
+        if self._end_turn_if_exhausted():
+            message += f'. {self.message}'
+        return self._result(True, message)
 
     def heal(self):
         if not self._combat_action_allowed():
@@ -276,7 +322,18 @@ class GameState:
         self.medkits -= 1
         self.player.hp = min(self.player.max_hp, self.player.hp + HEAL_AMOUNT)
         self.player.ap -= HEAL_COST
-        return self._result(True, 'Botiquín utilizado: hasta 8 de vida recuperada')
+        message = 'Botiquín utilizado: hasta 8 de vida recuperada'
+        if self._end_turn_if_exhausted():
+            message += f'. {self.message}'
+        return self._result(True, message)
+
+    def _end_turn_if_exhausted(self):
+        """Solo después de una acción válida; nunca desde el render o por tiempo."""
+        if self.mode != 'combat' or self.turn != 'player' or self.player.ap != 0:
+            return False
+        self.route.clear()
+        self._pending_direction = None
+        return bool(self.end_turn())
 
     def end_turn(self):
         if not self._combat_action_allowed():
@@ -296,8 +353,10 @@ class GameState:
             if enemy.ap >= ENEMY_ATTACK_COST:
                 enemy.ap -= ENEMY_ATTACK_COST
                 self.player.hp = max(0, self.player.hp - enemy.damage)
+                self._record_attack(enemy, self.player, self._simulation_time)
                 self.message = f'{enemy.name}: {enemy.damage} de daño'
                 if self.player.hp == 0:
+                    self.last_attacks.clear()
                     self.mode = 'defeat'
                     self.motions.clear()
                     self.route.clear()
@@ -325,6 +384,21 @@ class GameState:
             for cell in world.reserved_spawns:
                 if not _valid_cell(cell) or not world.spawn_available(cell):
                     raise ValueError(f'{map_id}: aparición reservada inválida {cell}')
+            npcs = [o for o in world.objects if o['kind'] == 'npc']
+            if len({o['id'] for o in npcs}) != len(npcs):
+                raise ValueError(f'{map_id}: identificador de habitante duplicado')
+            npc_cells = {tuple(o['cell']) for o in npcs}
+            if len(npc_cells) != len(npcs):
+                raise ValueError(f'{map_id}: habitantes superpuestos')
+            for npc in npcs:
+                cell = npc['cell']
+                if (not _valid_cell(cell) or not world.grid.walkable(cell)
+                        or cell in world.reserved_spawns or not npc.get('blocking')
+                        or any(u.cell == cell for u in world.enemies.values())
+                        or not any(c not in npc_cells for c in world.grid.neighbors(cell))
+                        or not npc.get('speaker') or not npc.get('sprite')
+                        or not npc.get('dialogue') or not all(isinstance(p, str) and p.strip() for p in npc['dialogue'])):
+                    raise ValueError(f'{map_id}: habitante inválido {npc["id"]}')
             for uid, patrol in world.patrols.items():
                 cells = [tuple(c) for c in patrol['cells']]
                 if (uid not in world.enemies or not cells
@@ -344,15 +418,26 @@ class GameState:
         if (not _valid_cell(self.player.cell) or not self.world.spawn_available(self.player.cell)):
             raise ValueError('Aparición inicial de Vera inválida')
 
+    def interaction_distance(self, cell, *, occupied_goal=False):
+        """Distancia de 0–2 aristas transitables; None significa fuera de alcance."""
+        if not _valid_cell(cell) or not self.grid.walkable(cell):
+            return None
+        occupied = self.occupied(self.player.id)
+        if cell in occupied and not occupied_goal:
+            return None
+        if self.player.cell == cell:
+            return 0
+        path = self.grid.find_path(self.player.cell, cell, occupied, occupied_goal)
+        return len(path) if path and len(path) <= 2 else None
+
     def travel(self, exit_id):
         """Viaje atómico: validar todo antes de cambiar el mapa activo."""
         if (self.mode != 'exploration' or not self._player_allowed()
                 or self.motions or self.route or self._pending_direction is not None):
             return self._result(False, 'Viaja solo en exploración y sin pasos ni rutas pendientes')
         exit = self.world.exits.get(exit_id)
-        if (exit is None or not _valid_cell(exit.cell) or not self.grid.walkable(exit.cell)
-                or not self.grid.can_step(self.player.cell, exit.cell)):
-            return self._result(False, 'Acércate a una casilla vecina de la salida')
+        if exit is None or self.interaction_distance(exit.cell) is None:
+            return self._result(False, 'Acércate a 2 pasos transitables de la salida o sitúate sobre ella')
         if exit.requires and exit.requires not in self.opened:
             return self._result(False, 'La salida exige abrir el acceso de mantenimiento')
         destination = self.maps.get(exit.destination)
@@ -364,6 +449,7 @@ class GameState:
         self.active_enemy_id = None
         self._enemy_wait = 0
         self.map_id = exit.destination
+        self.last_attacks.clear()
         self.context_revision += 1
         self.player.cell = exit.spawn
         return self._result(True, f'{destination.name}. Vida y recursos conservados.')
@@ -372,13 +458,36 @@ class GameState:
         if (self.mode != 'exploration' or not self._player_allowed()
                 or self.player.id in self.motions or self.route or self._pending_direction is not None):
             return self._result(False, 'Interactúa fuera de combate y sin moverte')
+        # Primero el NPC o salida más cercano; a igual distancia conserva
+        # salida primero y el orden estable de los datos. Un viaje rechazado
+        # no debe ocultar otra interacción válida.
+        candidates = []
         for exit_id, exit in self.world.exits.items():
-            if self.grid.can_step(self.player.cell, exit.cell):
-                return self.travel(exit_id)
+            steps = self.interaction_distance(exit.cell)
+            if steps is not None:
+                candidates.append((steps, 0, exit_id))
+        for obj in self.objects:
+            if obj['kind'] != 'npc' or obj['id'] in self.collected or obj['id'] in self.opened:
+                continue
+            steps = self.interaction_distance(tuple(obj['cell']), occupied_goal=True)
+            if steps is not None and steps > 0:
+                candidates.append((steps, 1, obj))
+        travel_error = None
+        for _, kind, target in sorted(candidates, key=lambda c: c[:2]):
+            if kind == 0:
+                result = self.travel(target)
+                if result:
+                    return result
+                if travel_error is None:
+                    travel_error = result
+            else:
+                self.active_dialogue = Dialogue(target['id'], target['speaker'], tuple(target['dialogue']))
+                self.world.talked_to.add(target['id'])
+                return self._result(True, self.active_dialogue.text)
         priorities = {'medkit': 0, 'maintenance': 1, 'mechanism': 2, 'panel': 3, 'note': 4}
         for obj in sorted(self.objects, key=lambda o: priorities.get(o['kind'], 5)):
             oid, kind, cell = obj['id'], obj['kind'], tuple(obj['cell'])
-            if oid in self.collected or oid in self.opened or (self.player.cell != cell and not self.grid.can_step(self.player.cell, cell)):
+            if kind == 'npc' or oid in self.collected or oid in self.opened or (self.player.cell != cell and not self.grid.can_step(self.player.cell, cell)):
                 continue
             if kind == 'medkit':
                 self.medkits += 1
@@ -398,12 +507,28 @@ class GameState:
                 self.mode = 'victory'
                 self.opened.add(oid)
             return self._result(True, obj.get('text', 'Objeto examinado'))
-        return self._result(False, 'No hay nada cercano con lo que interactuar')
+        return self._result(False, travel_error.message if travel_error is not None
+                            else 'No hay nada cercano con lo que interactuar')
+
+    def advance_dialogue(self):
+        if self.active_dialogue is None:
+            return self._result(False, 'No hay conversación abierta')
+        if self.active_dialogue.index + 1 == len(self.active_dialogue.pages):
+            return self.close_dialogue()
+        self.active_dialogue.index += 1
+        return self._result(True, self.active_dialogue.text)
+
+    def close_dialogue(self):
+        if self.active_dialogue is None:
+            return self._result(False, 'No hay conversación abierta')
+        self.active_dialogue = None
+        return self._result(True, 'Conversación terminada. Continúa explorando La Hondonada.')
 
     def update(self, dt):
         if dt < 0:
             raise ValueError('dt debe expresarse en segundos no negativos')
-        if self.mode in ('victory', 'defeat'):
+        if self.active_dialogue is not None or self.mode in ('victory', 'defeat'):
+            self.last_attacks.clear()
             return
         # Pasos de simulación acotados: un dt grande no altera costos ni secuencia.
         self._clock += dt
@@ -415,6 +540,7 @@ class GameState:
                 break
 
     def _tick(self, dt):
+        self._simulation_time += dt
         for uid, motion in list(self.motions.items()):
             # Un contacto previo en este tick pudo cancelar el snapshot restante.
             if self.motions.get(uid) is not motion:
@@ -428,6 +554,8 @@ class GameState:
             if self.mode == 'combat':
                 unit.ap -= 1
             if uid == self.player.id:
+                if self._end_turn_if_exhausted():
+                    continue
                 if self._pending_direction is not None:
                     delta = self._pending_direction
                     self._pending_direction = None

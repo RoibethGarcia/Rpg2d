@@ -1,8 +1,20 @@
 # Fase 4 — Animaciones y cierre
 
-**Estado: pendiente de implementación.** [Índice](README.md) ·
+**Estado: incremento independiente de ataques implementado; fase 4 completa pendiente.** [Índice](README.md) ·
 [Contrato obligatorio: base compartida](00-base-compartida.md) ·
 [Anterior: planta](03-planta-final.md).
+
+## Incremento autorizado el 21/10/2026
+
+A petición del usuario se comenzó por **ataques**, sin esperar el cierre de las
+fases del plan original. Vera (Llave/Potente comparten hoja), guardias y jefe
+reproducen clips one-shot sobre el combate **in situ** actual, con orientación,
+anclas, caché y cancelación. No se implementó arena ni caminar y NO se da por
+aceptada ninguna fase anterior. La secuencia letal se cancela inmediatamente
+al cerrar el combate. [Contrato, pruebas y límites reales](../ATAQUES.md).
+
+Los apartados siguientes conservan el plan completo, no una declaración de que
+cada tarea o checklist ya está realizada.
 
 ## Objetivo y dependencias
 

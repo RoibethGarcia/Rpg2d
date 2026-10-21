@@ -515,5 +515,37 @@
     {"id": "baranda_sur", "depth": 943, "polygon": [[731, 898], [790, 876], [794, 894], [739, 917], [739, 938], [731, 938]]},
     {"id": "baranda_escalera_sur", "depth": 905, "polygon": [[485, 802], [494, 798], [553, 891], [551, 906], [542, 898], [489, 815]]},
     {"id": "baranda_oeste", "depth": 775, "polygon": [[274, 721], [283, 716], [322, 738], [323, 764], [313, 768], [312, 745]]}
+  ],
+  "npcs": [
+    {
+      "id": "villager_plaza",
+      "kind": "npc",
+      "speaker": "Aldeano",
+      "cell": [
+        16,
+        1
+      ],
+      "blocking": true,
+      "sprite": "villager",
+      "dialogue": [
+        "Vera, si la última válvula cae, el pueblo no sobrevivirá.",
+        "La Custodia cerró el suministro desde la planta. El acceso al puesto está al sur; sigue las escaleras."
+      ]
+    },
+    {
+      "id": "villager_terrace",
+      "kind": "npc",
+      "speaker": "Artesano",
+      "cell": [
+        6,
+        2
+      ],
+      "blocking": true,
+      "sprite": "villager",
+      "dialogue": [
+        "Las reservas de agua se agotan. Cada taza cuenta.",
+        "Desde el puesto puedes abrir el paso de mantenimiento. La credencial del jefe permite activar la válvula de la planta."
+      ]
+    }
   ]
 }
