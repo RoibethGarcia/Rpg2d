@@ -59,7 +59,7 @@ class InputSceneIntegrationTests(unittest.TestCase):
         self.click((640, 440))
         self.assertIs(self.game.current_scene, self.game.scenes['play'])
         original = self.game.state
-        self.assertEqual((original.player.hp, len(original.enemies), original.medkits), (30, 0, 1))
+        self.assertEqual((original.player.hp, len(original.enemies), original.medkits), (30, 0, 3))
         self.assertEqual(sum(len(world.enemies) for world in original.maps.values()), 6)
         # Una orden real queda pendiente antes de abandonar la partida.
         self.key(pygame.K_d)
@@ -69,7 +69,7 @@ class InputSceneIntegrationTests(unittest.TestCase):
         self.click((640, 440))
         self.assertIsNot(self.game.state, original)
         self.assertFalse(self.game.state.motions or self.game.state.route)
-        self.assertEqual((self.game.state.player.hp, self.game.state.medkits), (30, 1))
+        self.assertEqual((self.game.state.player.hp, self.game.state.medkits), (30, 3))
 
     def test_blank_panels_and_action_button_never_leak_clicks_to_world(self):
         state = encounter_fixture()
@@ -135,7 +135,7 @@ class InputSceneIntegrationTests(unittest.TestCase):
         self.assertEqual(self.game.state.map_id, 'hondonada')
         self.assertEqual(sum(len(world.enemies) for world in self.game.state.maps.values()), 6)
 
-    def test_boss_fixture_ui_kill_panel_victory_and_terminal_new_game(self):
+    def test_boss_fixture_ui_kill_panel_credits_menu_and_new_game(self):
         state = encounter_fixture(hp=4, boss=True)
         state.objects = [dict(id='panel', kind='panel', cell=(2, 2), text='Agua restaurada')]
         self.use_fixture(state)
@@ -147,7 +147,9 @@ class InputSceneIntegrationTests(unittest.TestCase):
         self.game.update_game_logic(.02)
         self.assertEqual(state.mode, 'victory')
         self.assertIs(self.game.current_scene, self.game.scenes['victory'])
-        self.click((640, 492))
+        self.click(self.game.scenes['victory'].return_rect.center)
+        self.assertIs(self.game.current_scene, self.game.scenes['menu'])
+        self.click((640, 440))
         self.assertIs(self.game.current_scene, self.game.scenes['play'])
         self.assertIsNot(self.game.state, state)
         self.assertEqual((self.game.state.player.hp, self.game.state.credential), (30, False))

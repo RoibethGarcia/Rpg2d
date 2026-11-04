@@ -80,6 +80,7 @@ class PlayScene(Scene):
         self.renderer = WorldRenderer(game)
         self.dialogue_view = DialogueView(game)
         self.hover_cell = None
+        self._pointer_pos = None
         self._context = None
         self.buttons = [
             make_button(game, 28, 693, 166, 46, 'Llave · 2 PA / 4', lambda: self.command('attack')),
@@ -88,24 +89,44 @@ class PlayScene(Scene):
             make_button(game, 598, 693, 180, 46, 'Espacio · Fin turno', lambda: self.command('end_turn')),
             make_button(game, 790, 693, 190, 46, 'E · Interactuar', lambda: self.command('interact')),
             make_button(game, 1034, 734, 214, 42, 'Volver al menú', self.to_menu),
+            make_button(game, 714, 55, 108, 30, 'Zoom −', lambda: self.change_zoom(-1), 22),
+            make_button(game, 884, 55, 108, 30, 'Zoom +', lambda: self.change_zoom(1), 22),
         ]
 
-    def reset(self):
+    def reset(self, reset_zoom=True, stop_audio=True):
         self.hover_cell = None
-        self.renderer.reset()
+        self._pointer_pos = None
+        self.renderer.reset(reset_zoom)
         state = self.game.state
         if state is not None:
             state.last_attacks.clear()
+            state.drain_attack_events()
+        if stop_audio:
+            self.game.stop_combat_sounds()
         self._context = (id(state), state.context_revision) if state is not None else None
+
+    def change_zoom(self, direction):
+        self.renderer.camera.step(direction)
+        self._refresh_camera()
+
+    def _refresh_camera(self):
+        self.renderer.update_camera(self.game.state)
+        self.hover_cell = (self.renderer.pick(self._pointer_pos)
+                           if self._pointer_pos is not None else None)
 
     def _sync_context(self):
         state = self.game.state
         if self._context != (id(state), state.context_revision):
-            self.reset()
+            self.reset(reset_zoom=self._context is None or self._context[0] != id(state))
 
     def to_menu(self):
         self.game.sound('back')
         self.game.change_scene('menu')
+
+    def _play_attack_sounds(self):
+        # No usar last_attacks: pierde golpes de un mismo tick y los letales.
+        for action in self.game.state.drain_attack_events():
+            self.game.combat_sound(action.kind)
 
     def command(self, name, *args):
         self._sync_context()
@@ -116,13 +137,15 @@ class PlayScene(Scene):
             result = ActionResult(False, state.message)
         else:
             result = getattr(state, name)(*args)
+        self._play_attack_sounds()
         self._sync_context()
-        self.game.sound('confirm' if result.ok else 'error')
+        if name != 'attack' or not result.ok:
+            self.game.sound('confirm' if result.ok else 'error')
         return result
 
     def handle_events(self, events):
         self._sync_context()
-        self.renderer.configure(self.game.state)
+        self._refresh_camera()
         state = self.game.state
         for event in events:
             if state.active_dialogue is not None:
@@ -141,14 +164,16 @@ class PlayScene(Scene):
                     return  # También consume el resto del lote al cerrar.
                 continue
             if event.type == pygame.MOUSEMOTION:
-                self.hover_cell = self.renderer.projection.pick(*event.pos) if WORLD_RECT.collidepoint(event.pos) else None
+                self._pointer_pos = event.pos
+                self.hover_cell = self.renderer.pick(event.pos)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                self._pointer_pos = event.pos
                 # Los paneles completos, no solo sus botones, capturan los clics.
                 if not WORLD_RECT.collidepoint(event.pos):
                     for button in self.buttons:
                         button.handle_event(event)
                     continue
-                cell = self.renderer.projection.pick(*event.pos)
+                cell = self.renderer.pick(event.pos)
                 if not state.grid.in_bounds(cell):
                     continue
                 self.hover_cell = cell
@@ -174,21 +199,20 @@ class PlayScene(Scene):
     def update(self, dt):
         self._sync_context()
         self.game.state.update(dt)
+        self._play_attack_sounds()
+        self._sync_context()
+        self._refresh_camera()
 
     def draw(self, surface):
         self._sync_context()
         state = self.game.state
+        self._refresh_camera()
         path, reachable = self.renderer.draw(surface, state, self.hover_cell)
-        # Señales explícitas y provisionales; el render modular se hará en la tarea 5 de la fase 0.
-        for exit in state.world.exits.values():
-            color = AMBER if exit.requires and exit.requires not in state.opened else WATER
-            pygame.draw.polygon(surface, color, self.renderer.diamond(exit.cell), 3)
-            x, y = self.renderer.projection.center(exit.cell)
-            self.type.text(surface, f'E: {state.maps[exit.destination].name}', (x - 35, y - 34), 18, color)
         pygame.draw.rect(surface, PANEL, (0, 0, 1008, 90))
         self.type.text(surface, 'LA ÚLTIMA VÁLVULA', (28, 20), 34)
         self.type.text(surface, state.world.name, (28, 63), 20, AMBER)
         self.type.text(surface, 'Suelo conectado · F3: rutas' if state.map_id in self.renderer.layered_maps else 'E vecino: viajar', (430, 63), 20, MUTED)
+        self.type.text(surface, f'{self.renderer.camera.zoom:.0%}', (831, 63), 20, TEXT)
         mode = 'COMBATE' if state.mode == 'combat' else 'EXPLORACIÓN'
         self.type.text(surface, mode, (714, 25), 24, RED if state.mode == 'combat' else WATER)
         pygame.draw.rect(surface, PANEL, (1008, 0, 272, 800))
@@ -278,8 +302,41 @@ class TerminalScene(Scene):
         self.type.text(surface, 'La última válvula · Primera iteración', (80, 745), 22, MUTED)
 
 
-class VictoryScene(TerminalScene):
-    won = True
+class VictoryScene(Scene):
+    """Créditos ilustrados: el botón forma parte del PNG, no se repinta."""
+    def __init__(self, game):
+        super().__init__(game)
+        source = game.assets.get_image('credits')
+        self.image_rect = source.get_rect().fit(game.screen.get_rect())
+        self.image_rect.center = game.screen.get_rect().center
+        # Es arte RGB opaco: evitar alfa interpolado al escalar convert_alpha().
+        self.image = pygame.transform.smoothscale(source.convert(), self.image_rect.size)
+        # Coordenadas de autoría del botón: misma transformación que la imagen.
+        x, y, width, height = game.manifest['images']['credits']['menu_button']
+        sx = self.image_rect.width / source.get_width()
+        sy = self.image_rect.height / source.get_height()
+        self.return_rect = pygame.Rect(self.image_rect.x + round(x * sx),
+                                       self.image_rect.y + round(y * sy),
+                                       round(width * sx), round(height * sy))
+
+    def to_menu(self):
+        self.game.sound('back')
+        self.game.change_scene('menu')
+
+    def handle_events(self, events):
+        for event in events:
+            if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1
+                    and self.return_rect.collidepoint(event.pos)):
+                self.to_menu()
+                return
+            if (event.type == pygame.KEYDOWN
+                    and event.key in (pygame.K_ESCAPE, pygame.K_RETURN)):
+                self.to_menu()
+                return
+
+    def draw(self, surface):
+        surface.fill((0, 0, 0))
+        surface.blit(self.image, self.image_rect)
 
 
 class DefeatScene(TerminalScene):

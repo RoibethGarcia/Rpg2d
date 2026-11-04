@@ -24,7 +24,11 @@ class LastValveGame(GameLoop):
             for name, resource in self.manifest['sounds'].items():
                 self.assets.load_sound(name, ROOT / resource['path'])
                 self.assets.get_sound(name).set_volume(.35)
+            for kind, resource in self.manifest['combat_sounds'].items():
+                self.assets.load_sound(f'combat_{kind}', ROOT / resource['path'])
+                self.assets.get_sound(f'combat_{kind}').set_volume(resource['volume'])
         self.state = None
+        self._ambience_map = None
         self.scenes = {'menu': MenuScene(self), 'play': PlayScene(self),
                        'victory': VictoryScene(self), 'defeat': DefeatScene(self)}
         self.current_scene = self.scenes['menu']
@@ -33,10 +37,46 @@ class LastValveGame(GameLoop):
         if self.audio_enabled:
             self.ui_channel.play(self.assets.get_sound(name))
 
+    def combat_sound(self, kind):
+        if self.audio_enabled:
+            # Sound.play usa canales libres, nunca el canal 0 reservado a UI.
+            # Permite solapar las colas de varios golpes sin reiniciar el anterior.
+            self.assets.get_sound(f'combat_{kind}').play()
+
+    def stop_combat_sounds(self):
+        if self.audio_enabled:
+            for kind in self.manifest['combat_sounds']:
+                self.assets.get_sound(f'combat_{kind}').stop()
+
+    def _stop_ambience(self):
+        if self.audio_enabled and self._ambience_map is not None:
+            pygame.mixer.music.stop()
+            pygame.mixer.music.unload()
+            self._ambience_map = None
+
+    def _sync_ambience(self):
+        """Solo cargar al cambiar de mapa; el stream no usa el canal de UI."""
+        if not self.audio_enabled:
+            return
+        map_id = (self.state.map_id if self.current_scene is self.scenes['play']
+                  and self.state is not None else None)
+        resource = self.manifest['ambiences'].get(map_id)
+        target = map_id if resource is not None else None
+        if target == self._ambience_map:
+            return
+        self._stop_ambience()
+        if resource is not None:
+            pygame.mixer.music.load(str(ROOT / resource['path']))
+            pygame.mixer.music.set_volume(resource['volume'])
+            pygame.mixer.music.play(loops=-1)
+            self._ambience_map = target
+
     def start_new_game(self, map_id='hondonada'):
         if map_id not in ('hondonada', 'puesto', 'planta'):
             raise ValueError('Mapa inicial de prueba no permitido')
+        self._stop_ambience()
         self.state = GameState.new()
+        self.state.medkits = 3  # Temporal para pruebas; el balance base conserva 1.
         if map_id == 'puesto':
             self.state.player.cell = (4, 10)
             if not self.state.travel('to_puesto'):
@@ -54,21 +94,28 @@ class LastValveGame(GameLoop):
 
     def change_scene(self, scene_name):
         if self.current_scene is self.scenes['play'] and scene_name != 'play':
-            self.scenes['play'].reset()
+            # Dejar terminar el golpe letal al mostrar derrota; no reproducirlo otra vez.
+            self.scenes['play'].reset(stop_audio=scene_name != 'defeat')
+        elif scene_name == 'menu':
+            self.stop_combat_sounds()
         self.current_scene = self.scenes[scene_name]
+        self._sync_ambience()
 
     def stop(self):
+        self._stop_ambience()
         self.scenes['play'].reset()
         super().stop()
 
     def handle_specific_events(self, event):
         self.current_scene.handle_events([event])
+        self._sync_ambience()
 
     def update_game_logic(self, dt):
         self.current_scene.update(dt)
         if self.current_scene is self.scenes['play'] and self.state.mode in ('victory', 'defeat'):
             self.change_scene(self.state.mode)
             self.sound('confirm' if self.state.mode == 'victory' else 'error')
+        self._sync_ambience()
 
     def draw_game_elements(self):
         self.current_scene.draw(self.screen)

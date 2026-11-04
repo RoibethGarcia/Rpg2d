@@ -1,4 +1,4 @@
-"""Acceso explícito de pruebas: partida fresca, sin alterar balance ni menú normal."""
+"""Acceso de pruebas: partida fresca con inventario temporal y menú normal."""
 import unittest
 from unittest.mock import patch
 
@@ -28,6 +28,23 @@ class StartupTests(unittest.TestCase):
 
 
 class StartupStateTests(unittest.TestCase):
+    def test_temporary_three_medkits_apply_to_every_start_and_reset(self):
+        import pygame
+        from game.app import LastValveGame
+        from game.model import GameState
+        game = LastValveGame(audio_enabled=False)
+        try:
+            for map_id in ('hondonada', 'puesto', 'planta'):
+                with self.subTest(map_id=map_id):
+                    game.start_new_game(map_id=map_id)
+                    self.assertEqual(game.state.medkits, 3)
+                    game.state.medkits = 0
+                    game.start_new_game(map_id=map_id)
+                    self.assertEqual(game.state.medkits, 3)
+            self.assertEqual(GameState.new().medkits, 1)  # Balance base sin modificar.
+        finally:
+            pygame.quit()
+
     def test_explicit_planta_start_keeps_boss_guards_kits_and_credential_fresh(self):
         import pygame
         from game.app import LastValveGame
@@ -36,7 +53,7 @@ class StartupStateTests(unittest.TestCase):
             game.start_new_game(map_id='planta')
             state = game.state
             self.assertEqual((state.map_id, state.player.cell, state.player.hp, state.medkits),
-                             ('planta', (9,8), 30, 1))
+                             ('planta', (9,8), 30, 3))
             self.assertEqual(len(state.enemies), 4)
             self.assertEqual(state.enemies['boss'].hp, 48)
             self.assertFalse(state.credential or state.collected or state.opened)
@@ -54,13 +71,13 @@ class StartupStateTests(unittest.TestCase):
             game.start_new_game(map_id='puesto')
             state=game.state
             self.assertEqual((state.map_id,state.player.cell,state.player.hp,state.medkits),
-                             ('puesto',(2,10),30,1))
+                             ('puesto',(2,10),30,3))
             self.assertEqual({u.hp for u in state.enemies.values()},{16})
             self.assertFalse(state.opened or state.collected or state.motions or state.route)
             state.player.hp=1
             state.enemies['guard1'].hp=0
             game.start_new_game()
-            self.assertEqual((game.state.map_id,game.state.player.hp,game.state.medkits),('hondonada',30,1))
+            self.assertEqual((game.state.map_id,game.state.player.hp,game.state.medkits),('hondonada',30,3))
             self.assertEqual(game.state.maps['puesto'].enemies['guard1'].hp,16)
         finally:
             pygame.quit()

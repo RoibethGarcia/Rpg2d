@@ -294,7 +294,7 @@
         }
       ],
       "original_path": "exec-00edbb56-7c95-43fc-b4ae-ea56a96bcd38.png (original image_gen output bytes)",
-      "modifications": "Original generated PNG bytes unchanged; requested removal of the embedded plaza character. Runtime cached foreground polygon crops preserve registration; no offline image edits.",
+      "modifications": "Original generated PNG bytes unchanged; requested removal of the embedded plaza character. Runtime cached foreground polygon crops preserve registration; no offline image edits. Runtime alpha removes only near-black exterior connected to image borders before cached base/foreground preparation; original pixels and registration retained elsewhere.",
       "sha256": "66f3860cbc13438dd0159ce4197f33753620bce22d8d01329d06720b54fede85"
     },
     "puesto_plate": {
@@ -329,8 +329,14 @@
         }
       ],
       "original_path": "exec-f34b61ef-5603-4eba-a191-51a62a9f5eab.png (original image_gen output bytes)",
-      "modifications": "Original generated PNG bytes unchanged; requested removal of all five embedded guards. Navigation and foreground crops are authored separately for the resulting plate; no offline image edits.",
-      "sha256": "c485ecfa422a61a1d99b70a737cdf890b4d86b3d142b62a84d73a285470b6242"
+      "modifications": "Original generated PNG bytes unchanged; requested removal of all five embedded guards. Navigation and foreground crops are authored separately for the resulting plate; no offline image edits. Runtime alpha removes only near-black exterior connected to image borders before cached base/foreground preparation; original pixels and registration retained elsewhere. Authored exterior seed [100,240] also clears the near-black sky gap enclosed by the west tower cable, preserving the cable and other enclosed shadows.",
+      "sha256": "c485ecfa422a61a1d99b70a737cdf890b4d86b3d142b62a84d73a285470b6242",
+      "exterior_seeds": [
+        [
+          100,
+          240
+        ]
+      ]
     },
     "planta_plate": {
       "path": "assets/images/environments/planta-clean-v2.png",
@@ -348,7 +354,7 @@
       "redistribution_status": "pending_confirmation",
       "provenance_file": "assets/provenance/planta-layered.md",
       "original_path": "planta.png",
-      "modifications": "AI object-removal edit of tiny painted figure near the entry yard. Runtime proportional scaling and foreground polygon masks. Original reference preserved; pixel-identical preservation outside the edit is not guaranteed.",
+      "modifications": "AI object-removal edit of tiny painted figure near the entry yard. Runtime proportional scaling and foreground polygon masks. Original reference preserved; pixel-identical preservation outside the edit is not guaranteed. Runtime alpha removes only near-black exterior connected to image borders before cached base/foreground preparation; original plate bytes and registration retained. Authored exterior seed [150,420] clears the near-black landscape gap enclosed by the entry gantry, preserving its beam and other enclosed shadows.",
       "sha256": "5e41533d928cca4ebe122cd40f1470a2bc73ff00a2400b19c8fa02e613dce860",
       "usage": "layered_environment_plate",
       "background": "opaque_black",
@@ -371,6 +377,12 @@
           "sha256": "5e41533d928cca4ebe122cd40f1470a2bc73ff00a2400b19c8fa02e613dce860",
           "usage": "active_plate"
         }
+      ],
+      "exterior_seeds": [
+        [
+          150,
+          420
+        ]
       ]
     },
     "villager": {
@@ -1001,6 +1013,168 @@
           ]
         }
       ]
+    },
+    "waterfall": {
+      "path": "assets/images/effects/waterfall.png",
+      "size": [
+        1774,
+        887
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "grid": [
+        4,
+        2
+      ],
+      "crop": [
+        140,
+        18,
+        210,
+        400
+      ],
+      "frame_seconds": 0.1,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-10-30.",
+      "author": "User-supplied; generated with ChatGPT according to the user. Human authorship not independently established.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/waterfall.md",
+      "original_path": "Sprite de cascadas pixeladas transparentes.png",
+      "modifications": "Original PNG bytes unchanged. Runtime fixed subrects, scaling, opacity and authored water-only mask; cached once.",
+      "sha256": "21742462f619e722cd1a75d53bc1576c3ff0856b2d028f169825bb17dd8f28c9",
+      "usage": "hondonada_ambient_waterfall"
+    },
+    "credits": {
+      "path": "assets/images/ui/credits.png",
+      "size": [
+        1672,
+        940
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "background": "opaque",
+      "menu_button": [
+        704,
+        848,
+        266,
+        64
+      ],
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-10-30.",
+      "author": "User-supplied image; authorship and model provenance not independently verified.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/credits.md",
+      "original_path": "Pantalla de créditos industrial al atardecer.png",
+      "modifications": "Original PNG bytes unchanged. Proportional runtime scaling with letterboxing; cached once.",
+      "sha256": "39f30f52f82ffc152264eac06083e04a854abcdd5142e9dee32d33a5331196dc",
+      "usage": "victory_credits_screen"
+    },
+    "hondonada_background": {
+      "path": "assets/images/environments/hondonada_background.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "background": "opaque",
+      "usage": "hondonada_static_background",
+      "source_type": "user_supplied",
+      "source": "Provided by the user in the project conversation on 2026-11-04.",
+      "author": "User-supplied image; authorship and model provenance not independently verified.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/hondonada-background.md",
+      "original_path": "450d10ea-6825-48a2-b2fa-906d7214f749.png",
+      "modifications": "Original PNG bytes unchanged. Cached proportional cover scaling and center crop to world viewport; static screen-space background, outside world zoom and navigation.",
+      "sha256": "2ebe6f82613db61860baa9b3d9aad09dc0caf44d995d3cda9e3e5cc659fa7fd8"
+    },
+    "puesto_background": {
+      "path": "assets/images/environments/puesto_background.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "background": "opaque",
+      "usage": "puesto_static_background",
+      "source_type": "user_supplied",
+      "source": "Provided by the user in the project conversation on 2026-11-04.",
+      "author": "User-supplied image; authorship and model provenance not independently verified.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/puesto-background.md",
+      "original_path": "Paisaje industrial al atardecer.png",
+      "modifications": "Original PNG bytes unchanged. Cached proportional cover scaling and center crop to world viewport; static screen-space background, outside world zoom and navigation.",
+      "sha256": "1edd168655d52f1d0262043e5277808d82162481156c0b2a6afba8adb0f4a5ce"
+    },
+    "planta_background": {
+      "path": "assets/images/environments/planta_background.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "background": "opaque",
+      "usage": "planta_static_background",
+      "source_type": "user_supplied",
+      "source": "Provided by the user in the project conversation on 2026-11-04.",
+      "author": "User-supplied image; authorship and model provenance not independently verified.",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/planta-background.md",
+      "original_path": "Cañón industrial al atardecer (1).png",
+      "modifications": "Original PNG bytes unchanged. Cached proportional cover scaling and center crop to world viewport; static screen-space background, outside world zoom and navigation.",
+      "sha256": "5fc84f8a883db3426783f9c85c10e476d50572eb52b76074647eeea430cc4763"
+    }
+  },
+  "ambiences": {
+    "hondonada": {
+      "path": "assets/sounds/ambience/prologue.mp3",
+      "volume": 0.35,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-11-04.",
+      "author": "Not provided; authorship not independently verified.",
+      "original_path": "prologue.mp3",
+      "modifications": "None; original MP3 bytes unchanged. Runtime streaming, volume and looping only.",
+      "sha256": "53d36059f2af6884572f002a0153aa8b394b68b7d4a2adb7ffdd2a2e701820ea",
+      "usage": "looping_map_ambience",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/prologue.md"
+    },
+    "puesto": {
+      "path": "assets/sounds/ambience/heroic-demise-new.mp3",
+      "volume": 0.35,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-11-04.",
+      "author": "Not provided; authorship not independently verified.",
+      "original_path": "Heroic Demise (New).mp3",
+      "modifications": "Renamed only; original MP3 bytes unchanged. Runtime streaming, volume and looping only.",
+      "sha256": "f6551bed406c25acc8877ce51fd6fff0b70df3cb7636d9186eb220541b9d158e",
+      "usage": "looping_map_ambience",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/heroic-demise.md"
+    },
+    "planta": {
+      "path": "assets/sounds/ambience/gran-batalla.mp3",
+      "volume": 0.35,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-11-04.",
+      "author": "Not provided; authorship not independently verified.",
+      "original_path": "Gran Batalla.mp3",
+      "modifications": "Renamed only; original MP3 bytes unchanged. Runtime streaming, volume and looping only.",
+      "sha256": "71131d0ab60e29a67e41206984fa3f95642e147af9290668427a3d6db58ba407",
+      "usage": "looping_map_ambience",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/gran-batalla.md"
     }
   },
   "sounds": {
@@ -1755,6 +1929,64 @@
           ]
         }
       ]
+    }
+  },
+  "combat_sounds": {
+    "basic": {
+      "path": "assets/sounds/combat/hit01.mp3.flac",
+      "volume": 0.55,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-11-04; independent_nu_ljudbank-hits_and_punches folder.",
+      "author": "Not independently verified; supplied folder names Independent.nu.",
+      "original_path": "hit01.mp3.flac",
+      "modifications": "None; original FLAC bytes unchanged. Runtime decoding and volume only.",
+      "sha256": "bdab6cd6c1d261efc363da24e205372daa88718b98bb149677d74459b24245d8",
+      "duration_seconds": 1.045964,
+      "usage": "one_shot_per_applied_attack",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/combat-sounds.md"
+    },
+    "power": {
+      "path": "assets/sounds/combat/hit02.mp3.flac",
+      "volume": 0.55,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-11-04; independent_nu_ljudbank-hits_and_punches folder.",
+      "author": "Not independently verified; supplied folder names Independent.nu.",
+      "original_path": "hit02.mp3.flac",
+      "modifications": "None; original FLAC bytes unchanged. Runtime decoding and volume only.",
+      "sha256": "31fe92be9bf7dccf2428ade7b680ee09e2f70c2aa2a3cbec502f4a9ff932249f",
+      "duration_seconds": 1.176576,
+      "usage": "one_shot_per_applied_attack",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/combat-sounds.md"
+    },
+    "guard": {
+      "path": "assets/sounds/combat/hit03.mp3.flac",
+      "volume": 0.55,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-11-04; independent_nu_ljudbank-hits_and_punches folder.",
+      "author": "Not independently verified; supplied folder names Independent.nu.",
+      "original_path": "hit03.mp3.flac",
+      "modifications": "None; original FLAC bytes unchanged. Runtime decoding and volume only.",
+      "sha256": "b97c1246a9b3c02f1d0e0ce6ce0f36a407de32ff912c00c1ddadcf0b8196235e",
+      "duration_seconds": 1.072086,
+      "usage": "one_shot_per_applied_attack",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/combat-sounds.md"
+    },
+    "boss": {
+      "path": "assets/sounds/combat/hit07.mp3.flac",
+      "volume": 0.55,
+      "source_type": "user_supplied",
+      "source": "Provided by the user in this project conversation on 2026-11-04; independent_nu_ljudbank-hits_and_punches folder.",
+      "author": "Not independently verified; supplied folder names Independent.nu.",
+      "original_path": "hit07.mp3.flac",
+      "modifications": "None; original FLAC bytes unchanged. Runtime decoding and volume only.",
+      "sha256": "fd0bddacf2daf2041be7196d1569b91cec2188ebdc66dc8bbf508f58c4d9baa4",
+      "duration_seconds": 1.124331,
+      "usage": "one_shot_per_applied_attack",
+      "redistribution_status": "pending_confirmation",
+      "provenance_file": "assets/provenance/combat-sounds.md"
     }
   }
 }

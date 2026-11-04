@@ -50,6 +50,22 @@ Textos de licencia completos: `assets/licenses/CC0-1.0.txt` (incluido en ZIP de 
 
 `sounds.click`, `confirm`, `error` y `back` son OGG decodificables por el mixer de Pygame. Los originales duran 6 segundos (incluyen cola/silencio); no se recortaron. Volumen inicial discreto y canales limitados en la UI para evitar acumulación. Las pruebas usan audio dummy: verifican decodificación, NO calidad audible ni adecuación musical. Revisión con dispositivo real pendiente.
 
+## Créditos de victoria
+
+`assets/images/ui/credits.png` es el PNG **1672×940 RGB opaco** aportado por el
+usuario el 30/10/2026, copiado byte a byte. Se carga como `images.credits` desde
+el manifiesto y se prepara una única escala proporcional, centrada con bandas
+negras: no se recorta ni se deforma. El botón pintado funciona mediante una zona
+clicable transformada con la imagen; clic izquierdo, Escape o Enter vuelven al
+menú. La derrota conserva su presentación. [Procedencia y ampliaciones futuras](../assets/provenance/credits.md).
+
+Autoría/modelo y permiso de redistribución no verificados; **no publicar el PNG
+hasta confirmar condiciones**. Su texto incrustado menciona OpenGameArt para
+sonido, pero el juego carga los cuatro OGG de **ObsydianX — Interface SFX Pack 1**
+documentados arriba y en `sounds` del manifiesto (CC0-1.0). Se conserva el arte
+solicitado intacto; corregir/ampliar esa atribución en una futura edición
+autorizada. Los textos incrustados no sustituyen el inventario de procedencias.
+
 ## Recursos NO integrados
 
 [SBS Floor Pack](https://screamingbrainstudios.itch.io/isotilepack), [Wall Pack](https://screamingbrainstudios.itch.io/isowallpack) y [Object Pack](https://screamingbrainstudios.itch.io/isometric-object-pack) anuncian CC0 en sus páginas. La descarga de piso respondió HTTP 429; no se reintentó ni se cambió de vía para eludirlo. NO hay archivos SBS integrados y no deben presentarse como tales.
@@ -218,3 +234,141 @@ orientaciones y escalas por mapa al cargar, sin I/O por frame.
 [Alcance, pruebas y límites](ATAQUES.md). Derechos de redistribución **pendientes**,
 sin atribuirles la licencia de otros packs. No se incorporaron caminar ni ciclos
 traseros; los dos ataques lógicos de Vera reutilizan su única secuencia aportada.
+
+## Efectos fijos de combate — 04/11/2026
+
+Cuatro FLAC aportados de `independent_nu_ljudbank-hits_and_punches` se copian
+sin alterar bytes a `assets/sounds/combat/`: `hit01.mp3.flac` (Llave de Vera),
+`hit02.mp3.flac` (Potente), `hit03.mp3.flac` (guardias) y `hit07.mp3.flac` (jefe).
+`combat_sounds` registra asignación, volumen 0.55, hash, duración y procedencia.
+No se integran los otros cuatro archivos propuestos. **Autoría/licencia no
+verificadas; redistribución pendiente**, sin atribuir CC0 por analogía con UI.
+[Procedencia, consulta de licencia y límites](../assets/provenance/combat-sounds.md).
+
+Se cargan una vez y se reproducen una vez por golpe aplicado, incluidos múltiples
+golpes por turno y letales. Canales libres permiten superponer las colas sin
+cortar UI ni música; no se generan sonidos por frame ni se cambian las reglas.
+SDL dummy acredita decodificación y mezcla en canales, NO calidad audible ni
+sincronización perceptiva. Los originales no se recortan ni convierten.
+
+## Ambientación de La Hondonada — 04/11/2026
+
+`ambiences.hondonada` registra `assets/sounds/ambience/prologue.mp3`, aportado
+por el usuario y copiado sin modificar sus bytes. SHA-256 y volumen inicial 0.35
+en el manifiesto. **Autoría y licencia no verificadas; redistribución pendiente
+de confirmación**, sin extenderle el CC0 de los efectos de interfaz.
+[Procedencia y límites](../assets/provenance/prologue.md).
+
+Se reproduce en streaming y bucle con `pygame.mixer.music`, independiente del
+canal reservado para UI. No se carga por frame ni se reinicia por diálogos.
+Salir del mapa, volver al menú, victoria, derrota y cierre detienen y liberan el
+stream; volver al pueblo o iniciar otra partida lo reinicia. El puesto y la planta
+tienen sus propias pistas, documentadas a continuación.
+SDL dummy comprueba decodificación y transiciones, NO calidad audible, balance
+ni continuidad de la unión del bucle. El MP3 no se recortó ni convirtió.
+
+## Ambientación de El Puesto de Control — 04/11/2026
+
+`ambiences.puesto` registra `assets/sounds/ambience/heroic-demise-new.mp3`, copia
+intacta del archivo `Heroic Demise (New).mp3` aportado para el segundo escenario.
+Solo se renombra; hash SHA-256 y volumen inicial 0.35 en el manifiesto.
+**Autoría y licencia no verificadas; redistribución pendiente de confirmación**.
+[Procedencia y límites](../assets/provenance/heroic-demise.md).
+
+Reutiliza el streaming y el bucle por mapa existentes, sin cambiar código del
+juego. Viajar entre Hondonada y puesto cambia a la pista correspondiente desde
+el principio; `--map puesto` también la reproduce. Viajar a planta inicia
+`Gran Batalla.mp3`; salir de la partida detiene la ambientación.
+Los efectos UI siguen independientes. La mezcla audible y
+la continuidad del bucle quedan pendientes de escucha nativa.
+
+## Ambientación de la Planta — 04/11/2026
+
+`ambiences.planta` registra `assets/sounds/ambience/gran-batalla.mp3`, copia
+intacta de `Gran Batalla.mp3`, aportado por el usuario para el tercer escenario.
+Solo se renombra; volumen inicial 0.35 y SHA-256 en el manifiesto.
+**Autoría y licencia no verificadas; redistribución pendiente de confirmación**.
+[Procedencia y límites](../assets/provenance/gran-batalla.md).
+
+Reutiliza el streaming y el bucle existentes sin cambios de lógica. Al viajar
+puesto↔planta cambia la pista; `--map planta` también usa `Gran Batalla.mp3`.
+Menú, victoria, derrota y cierre detienen y liberan el stream. Los tres escenarios
+tienen ahora pista propia, sin alterar los efectos UI ni las reglas del dominio.
+SDL dummy no acredita calidad audible ni continuidad de la unión del bucle.
+
+## Paisaje estático de La Hondonada — 04/11/2026
+
+`hondonada_background` registra la imagen aportada de 1448×1086, copiada sin
+modificar bytes a `assets/images/environments/hondonada_background.png`, con
+hash SHA-256 en el manifiesto. **Autoría y licencia no verificadas;
+redistribución pendiente de confirmación**.
+[Procedencia y preparación](../assets/provenance/hondonada-background.md).
+
+Se prepara una vez con escala proporcional y recorte central al viewport. Se
+dibuja detrás del mundo, fijo e independiente del zoom, sin colisiones ni
+exploración. La placa RGB original conserva sus bytes; solo su casi negro
+exterior conectado al borde recibe alfa cero en memoria, antes de preparar base
+y capas. No se borran globalmente colores negros ni se cambian las coordenadas
+de actores, objetos o UI. Puesto y planta tienen sus propios fondos,
+documentados a continuación.
+
+## Paisaje estático del Puesto de Control — 04/11/2026
+
+`puesto_background` registra el primer adjunto, `Paisaje industrial al atardecer.png`,
+PNG RGB de 1448×1086 copiado byte a byte a
+`assets/images/environments/puesto_background.png`, con SHA-256 en el manifiesto.
+**Autoría y licencia no verificadas; redistribución pendiente de confirmación**.
+[Procedencia y límites](../assets/provenance/puesto-background.md).
+
+Reutiliza el fondo fijo al viewport y la máscara del negro exterior conectado
+al borde para la placa del puesto, manteniendo sus bytes originales y registro.
+Base y primeros planos reciben la misma transparencia antes de escalar. No cambia
+la navegación ni las posiciones de personajes, objetos, etiquetas o UI; el fondo
+no tiene colisiones ni exploración y no se amplía con el zoom.
+Una semilla de máscara en `[100,240]` identifica el hueco exterior cerrado por
+el cable de la torre oeste, sin borrar el cable ni las sombras no seleccionadas.
+
+El segundo adjunto, `Planta industrial al atardecer.png`, es solo una referencia
+visual: no se incorpora al runtime porque ya incluye personajes y textos pintados.
+Se conserva la placa limpia del mapa, no se regenera ni se mueve para reproducir
+el montaje. El recorte proporcional del paisaje se adapta al viewport actual.
+
+## Paisaje estático de la Planta — 04/11/2026
+
+`planta_background` registra `Cañón industrial al atardecer (1).png`,
+PNG RGB de 1448×1086 copiado byte a byte a
+`assets/images/environments/planta_background.png`, con SHA-256 en el manifiesto.
+**Autoría y licencia no verificadas; redistribución pendiente de confirmación**.
+[Procedencia y límites](../assets/provenance/planta-background.md).
+
+Por cambio explícito del usuario, este paisaje de terreno rocoso sustituye al
+anterior de lago (`Atardecer industrial entre montañas y niebla.png`), cuyo
+contenido ya no está en el recurso activo. Se conserva la ruta de carga y se
+actualiza su hash, sin cambios de código ni datos del mapa.
+
+Reutiliza la composición de los dos primeros fondos: paisaje fijo al viewport,
+fuera del zoom, y máscara de alfa exterior preparada en memoria antes de escalar
+base y primeros planos de `planta-clean-v2.png`. El PNG activo original conserva
+sus bytes y registro; `planta-clean.png` sigue siendo un intermedio no cargado.
+La semilla de máscara `[150,420]` identifica el paisaje encerrado por el pórtico
+de entrada, conservando su viga y las sombras cerradas no seleccionadas. No se
+borra globalmente el negro del decorado.
+
+`Instalación industrial al atardecer.png` se consulta solo como referencia, no
+como imagen activa: ya tiene actores y textos pintados. No se alteran las
+posiciones, navegación, colisiones, válvula ni UI para reproducir el montaje.
+Los tres mapas tienen ahora paisaje independiente, estático y no explorable.
+
+## Cascada ambiental del pueblo — 30/10/2026
+
+`waterfall` registra `assets/images/effects/waterfall.png`: copia sin editar de
+la hoja aportada por el usuario, generada con ChatGPT según su declaración.
+Mide 1774×887 y contiene ocho poses 4×2 con alfa real; **redistribución pendiente
+de confirmación**, sin licencia libre atribuida. Hash y metadatos en el manifiesto.
+
+Se recortan celdas de fronteras enteras con una ventana local fija y se preparan
+ocho superficies con escala, máscara y opacidad durante la carga. Solo
+`data/hondonada.json` declara una ubicación: la caída sudeste bajo la tubería.
+El reloj existente en segundos selecciona los cuadros a 10 FPS. No afecta al
+dominio y se compone antes de las capas delanteras y del zoom. El resto del agua
+sigue siendo parte estática de las placas. [Procedencia](../assets/provenance/waterfall.md).

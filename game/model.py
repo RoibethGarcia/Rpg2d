@@ -41,6 +41,7 @@ class AttackAction:
     attacker_id: str
     target_cell: Cell
     occurred_at: float
+    kind: str = 'basic'
 
 @dataclass(frozen=True)
 class MapExit:
@@ -112,6 +113,7 @@ class GameState:
         self._enemy_wait = 0
         self.active_dialogue = None
         self.last_attacks = {}
+        self._attack_events = []
         self._simulation_time = 0
 
     @property
@@ -119,9 +121,16 @@ class GameState:
         """Reloj continuo en segundos, incluida la fracción aún no simulada."""
         return self._simulation_time + self._clock
 
-    def _record_attack(self, attacker, target, occurred_at):
-        self.last_attacks[attacker.id] = AttackAction(
-            attacker.id, target.cell, occurred_at)
+    def _record_attack(self, attacker, target, occurred_at, kind):
+        action = AttackAction(attacker.id, target.cell, occurred_at, kind)
+        self.last_attacks[attacker.id] = action
+        self._attack_events.append(action)
+
+    def drain_attack_events(self):
+        """Hechos aplicados, incluidos letales; consumir no aplica daño ni PA."""
+        events = tuple(self._attack_events)
+        self._attack_events.clear()
+        return events
 
     @property
     def world(self):
@@ -294,7 +303,7 @@ class GameState:
         self.player.ap -= cost
         damage = POWER_DAMAGE if power else BASIC_DAMAGE
         enemy.hp = max(0, enemy.hp - damage)
-        self._record_attack(self.player, enemy, self.elapsed)
+        self._record_attack(self.player, enemy, self.elapsed, 'power' if power else 'basic')
         if enemy.hp == 0:
             self.last_attacks.clear()
             self.mode = 'exploration'
@@ -353,7 +362,8 @@ class GameState:
             if enemy.ap >= ENEMY_ATTACK_COST:
                 enemy.ap -= ENEMY_ATTACK_COST
                 self.player.hp = max(0, self.player.hp - enemy.damage)
-                self._record_attack(enemy, self.player, self._simulation_time)
+                self._record_attack(enemy, self.player, self._simulation_time,
+                                    'boss' if enemy.boss else 'guard')
                 self.message = f'{enemy.name}: {enemy.damage} de daño'
                 if self.player.hp == 0:
                     self.last_attacks.clear()
@@ -450,6 +460,7 @@ class GameState:
         self._enemy_wait = 0
         self.map_id = exit.destination
         self.last_attacks.clear()
+        self._attack_events.clear()
         self.context_revision += 1
         self.player.cell = exit.spawn
         return self._result(True, f'{destination.name}. Vida y recursos conservados.')

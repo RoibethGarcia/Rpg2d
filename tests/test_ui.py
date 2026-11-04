@@ -47,7 +47,7 @@ class UITests(unittest.TestCase):
         self.game.start_new_game()
         self.assertIsNot(self.game.state, before)
         self.assertEqual(self.game.state.player.hp, 30)
-        self.assertEqual(self.game.state.medkits, 1)
+        self.assertEqual(self.game.state.medkits, 3)
     def test_ui_click_does_not_order_world_movement(self):
         self.game.start_new_game()
         self.assertIsNotNone(self.game.state)
@@ -85,8 +85,11 @@ class UITests(unittest.TestCase):
     def test_audio_enabled_loads_real_manifest_sounds(self):
         pygame.quit()
         game = LastValveGame(audio_enabled=True)
-        self.assertEqual(set(game.assets.sounds), {'click', 'confirm', 'back', 'error'})
-        self.assertIsInstance(game.assets.get_sound('confirm'), pygame.mixer.Sound)
+        self.assertEqual(set(game.assets.sounds),
+                         {'click', 'confirm', 'back', 'error',
+                          'combat_basic', 'combat_power', 'combat_guard', 'combat_boss'})
+        for sound in game.assets.sounds.values():
+            self.assertIsInstance(sound, pygame.mixer.Sound)
 
     def test_ui_sounds_replace_one_another_without_accumulation(self):
         pygame.quit()

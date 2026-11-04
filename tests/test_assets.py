@@ -68,6 +68,10 @@ class AssetTests(unittest.TestCase):
                     self.assertLessEqual(max(tuple(image.get_at((0, 0)))[:3]), 4)
                     self.assertTrue(all(pixel.a == 255 for pixel in (
                         image.get_at((0, 0)), image.get_at((image.get_width() // 2, image.get_height() // 2)))))
+                elif entry.get('background') == 'opaque':
+                    self.assertIn(entry['usage'], ('victory_credits_screen', 'hondonada_static_background',
+                                                   'puesto_static_background', 'planta_static_background'))
+                    self.assertEqual(image.get_masks()[3], 0)
                 else:
                     self.assertTrue(image.get_colorkey() is not None or image.get_masks()[3])
                 frame = pygame.Rect(entry.get("frame", [0, 0, *entry["size"]]))

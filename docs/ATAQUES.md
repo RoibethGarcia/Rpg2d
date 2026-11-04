@@ -40,6 +40,30 @@ fases anteriores del plan por escenarios.
 [Procedencia, máscaras, escalas y derechos pendientes](../assets/provenance/combat-attacks.md).
 No se hacen lecturas, máscaras ni reescalados de hojas durante la reproducción.
 
+## Incremento de audio por golpe — 04/11/2026
+
+`AttackAction` incorpora `kind` (`basic`, `power`, `guard`, `boss`). Además del
+último clip por actor, el dominio conserva hechos consumibles mediante
+`drain_attack_events()`: no se sobrescriben varios golpes de un mismo update
+ni se pierde el letal cuando se limpia `last_attacks`. Consumirlos NO modifica
+daño, PA, turnos o animación; no hay callbacks de daño desde el audio.
+
+La escena consume una vez tras comandos y actualizaciones, nunca al dibujar.
+Cada hecho dispara su muestra fija precargada en canales libres, reservando el
+canal 0 para UI y manteniendo el streaming de ambientación. Los rechazos conservan
+su tono UI pero no generan impactos. Los ataques válidos sustituyen su antiguo
+tono de confirmación por el golpe. Menú, reset, viaje, nueva partida y cierre
+descartan hechos y detienen colas. Derrota limpia el clip pero permite terminar
+el sonido letal, sin volver a reproducirlo.
+
+Con frames normales cada golpe de IA conserva su cadencia lógica de 0.22 s.
+Un update grande emite todos sus golpes juntos al finalizarlo: no se retrasa el
+dominio ni se inventa una cola temporal de ataques. Los FLAC originales conservan
+silencio inicial y colas; sincronización perceptiva y mezcla necesitan escucha.
+[Asignaciones, procedencia y límites](../assets/provenance/combat-sounds.md).
+El contrato de `Sound.play()` y la reserva de canales está documentado en
+[Pygame mixer](https://www.pygame.org/docs/ref/mixer.html).
+
 ## Validación ejecutada
 
 Runner real: Python 3.13.15 del `.venv`, Pygame 2.6.1. No hubo builds,

@@ -4,6 +4,7 @@ from engine.game_object import GameObject
 from game.world import Projection
 from game.environment import EnvironmentArt, LayeredEnvironmentArt
 from game.animation import isolate_attack_frames, prepare_attack_clip
+from game.camera import ZoomCamera
 
 BG = (17, 24, 29)
 PANEL = (26, 36, 42)
@@ -132,6 +133,11 @@ class WorldRenderer:
         self.layered_maps = {'hondonada': self.hondonada, 'puesto': self.puesto,
                              'planta': self.planta}
         self.debug_navigation = False
+        self.camera = ZoomCamera(WORLD_RECT)
+        # Buffers acotados y reutilizados: se amplía la composición, no se
+        # recalculan sprites, máscaras ni clips de ataque para cada zoom.
+        self._world_surface = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
+        self._zoom_surface = pygame.Surface(WORLD_RECT.size, pygame.SRCALPHA)
         self._map_id = None
         self.frames = {}
         self.anchors = {}
@@ -189,10 +195,27 @@ class WorldRenderer:
                                else Projection(48, 24, origin=(400, 110)))
             self._map_id = map_id
 
-    def reset(self):
+    def reset(self, reset_zoom=True):
         self.actors.clear()
         self.villagers.clear()
+        if reset_zoom:
+            self.camera.level = 0
         self.configure(self.game.state)
+
+    def update_camera(self, state):
+        self.configure(state)
+        foot = self.projection.center(state.player.cell)
+        motion = state.motions.get(state.player.id)
+        if motion:
+            fraction = min(1, motion.elapsed / motion.duration)
+            start, end = self.projection.center(motion.start), self.projection.center(motion.end)
+            foot = tuple(a + (b - a) * fraction for a, b in zip(start, end))
+        self.camera.follow(foot)
+
+    def pick(self, point):
+        if not WORLD_RECT.collidepoint(point):
+            return None
+        return self.projection.pick(*self.camera.source(point))
 
     def diamond(self, cell):
         if hasattr(self.projection, 'polygon'):
@@ -270,6 +293,35 @@ class WorldRenderer:
             surface.blit(self.pipe, (x - 24, y - 25))
 
     def draw(self, surface, state, hover):
+        self.update_camera(state)
+        art = self.layered_maps.get(state.map_id)
+        background = art.background if art is not None else None
+        target = (self._world_surface if self.camera.zoom != 1 or background is not None
+                  else surface)
+        result = self._draw_world(target, state, hover)
+        # Las salidas pertenecen al mundo, no al panel: también se amplían.
+        old_clip = target.get_clip()
+        target.set_clip(old_clip.clip(WORLD_RECT))
+        for exit in state.world.exits.values():
+            color = AMBER if exit.requires and exit.requires not in state.opened else WATER
+            pygame.draw.polygon(target, color, self.diamond(exit.cell), 3)
+            x, y = self.projection.center(exit.cell)
+            self.type.text(target, f'E: {state.maps[exit.destination].name}', (x - 35, y - 34), 18, color)
+        target.set_clip(old_clip)
+        if background is not None:
+            surface.fill(BG)
+            surface.blit(background, WORLD_RECT)
+        if self.camera.zoom != 1:
+            if background is None:
+                surface.fill(BG)
+            pygame.transform.smoothscale(target.subsurface(self.camera.crop),
+                                         WORLD_RECT.size, self._zoom_surface)
+            surface.blit(self._zoom_surface, WORLD_RECT)
+        elif background is not None:
+            surface.blit(target, WORLD_RECT, WORLD_RECT)
+        return result
+
+    def _draw_world(self, surface, state, hover):
         self.configure(state)
         if state.map_id in self.layered_maps:
             return self.draw_layered(surface, state, hover)
@@ -321,9 +373,10 @@ class WorldRenderer:
 
 
     def draw_layered(self, surface, state, hover):
-        surface.fill(BG)
         art, projection = self.layered_maps[state.map_id], self.projection
+        surface.fill((0, 0, 0, 0) if art.background is not None else BG)
         art.blit_base(surface)
+        art.blit_ambient(surface, state.elapsed)
         path = state.preview_path(hover) if hover is not None else list(state.route)
         budget = state.player.ap if state.mode == 'combat' else len(path)
         previous = projection.center(state.player.cell)
@@ -373,7 +426,7 @@ class WorldRenderer:
             actor.sync(state, projection)
             layers.append((actor.foot[1], 2, unit.id, actor))
         old_clip = surface.get_clip()
-        surface.set_clip(WORLD_RECT)
+        surface.set_clip(old_clip.clip(WORLD_RECT))
         for _, kind, _, value in sorted(layers, key=lambda item: item[:3]):
             if kind == 1:
                 art.blit_layer(surface, value)

@@ -1,5 +1,87 @@
 """Presentación modular y por capas cacheada; no modifica reglas de campaña."""
+from math import isfinite
+
 import pygame
+
+
+def transparent_exterior(source, seeds=()):
+    """Retira solo el casi negro (RGB <= 12) conectado al borde, no sombras.
+
+    Máscara de presentación preparada antes de escalar; conserva el alfa y los
+    píxeles interiores y nunca modifica la imagen del AssetManager. Las semillas
+    autoradas permiten marcar huecos de paisaje cerrados por cables o barandas.
+    """
+    dark = pygame.mask.from_threshold(source, (0, 0, 0, 255), (13, 13, 13, 255))
+    transparent = pygame.mask.from_surface(source, threshold=0)
+    transparent.invert()
+    dark.draw(transparent, (0, 0))
+    exterior = pygame.Mask(source.get_size())
+    width, height = source.get_size()
+    border = [(x, y) for x in range(width) for y in (0, height - 1)]
+    border += [(x, y) for y in range(height) for x in (0, width - 1)]
+    border.extend(seeds)
+    for point in border:
+        if dark.get_at(point) and not exterior.get_at(point):
+            exterior.draw(dark.connected_component(point), (0, 0))
+    if source.get_masks()[3]:
+        result = source.copy()
+    else:
+        result = pygame.Surface(source.get_size(), pygame.SRCALPHA)
+        result.blit(source, (0, 0))
+    mask = exterior.to_surface(setcolor=(255, 255, 255, 0),
+                               unsetcolor=(255, 255, 255, 255))
+    result.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    return result
+
+
+class WaterfallAnimation:
+    """Superposición local cacheada: nunca avanza el reloj ni modifica el mundo.
+
+    Un único recorte relativo para TODAS las celdas conserva el anclaje. Los
+    límites enteros de la grilla absorben el píxel sobrante de la hoja original.
+    La máscara autorada limita el agua a la caída, sin pintar caño ni rocas.
+    """
+    def __init__(self, sheet, record, placement, projection):
+        cols, rows = record['grid']
+        crop = pygame.Rect(record['crop'])
+        self.frame_seconds = record['frame_seconds']
+        target = pygame.Rect(placement['rect'])
+        if (cols <= 0 or rows <= 0 or min(crop.size) <= 0
+                or min(target.size) <= 0 or not isfinite(self.frame_seconds)
+                or self.frame_seconds <= 0 or not 0 <= placement['opacity'] <= 255):
+            raise ValueError('Configuración de cascada inválida')
+        self.position = tuple(round(v) for v in projection.screen(target.topleft))
+        size = tuple(max(1, round(v * projection.scale)) for v in target.size)
+        mask = pygame.Surface(size, pygame.SRCALPHA)
+        pygame.draw.polygon(mask, 'white', [
+            (round((x - target.x) * size[0] / target.w),
+             round((y - target.y) * size[1] / target.h))
+            for x, y in placement['polygon']])
+        frames, source_rects = [], []
+        for row in range(rows):
+            for col in range(cols):
+                x, y = col * sheet.get_width() // cols, row * sheet.get_height() // rows
+                cell = pygame.Rect(x, y, (col + 1) * sheet.get_width() // cols - x,
+                                   (row + 1) * sheet.get_height() // rows - y)
+                rect = crop.move(x, y)
+                if not cell.contains(rect):
+                    raise ValueError('Recorte de cascada fuera de su celda')
+                image = pygame.transform.smoothscale(sheet.subsurface(rect), size)
+                image.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                image.set_alpha(placement['opacity'])
+                frames.append(image)
+                source_rects.append(rect)
+        self.frames = tuple(frames)
+        self.source_rects = tuple(source_rects)
+
+    def frame_index(self, elapsed):
+        if not isfinite(elapsed) or elapsed < 0:
+            raise ValueError('Tiempo de cascada debe ser finito y no negativo')
+        # Tolerancia solo para restas/acumulaciones del reloj en fronteras exactas.
+        return int((elapsed + 1e-9) / self.frame_seconds) % len(self.frames)
+
+    def blit(self, surface, elapsed):
+        surface.blit(self.frames[self.frame_index(elapsed)], self.position)
 
 
 class EnvironmentArt:
@@ -87,6 +169,21 @@ class LayeredEnvironmentArt:
         source = game.assets.get_image(f'{map_id}_plate')
         if source.get_size() != tuple(self.layout.data['image_size']):
             raise ValueError(f'{map_id}: dimensiones de plate incompatibles con navegación')
+        self.background = None
+        if map_id in ('hondonada', 'puesto', 'planta'):
+            seeds = game.manifest['images'][f'{map_id}_plate'].get('exterior_seeds', ())
+            source = transparent_exterior(source, seeds)
+            # Fondo fijo al viewport: escala proporcional para cubrir, sin bandas
+            # ni deformación. No participa en la proyección ni en la cámara.
+            landscape = game.assets.get_image(f'{map_id}_background').convert()
+            scale = max(viewport.width / landscape.get_width(),
+                        viewport.height / landscape.get_height())
+            size = (max(viewport.width, round(landscape.get_width() * scale)),
+                    max(viewport.height, round(landscape.get_height() * scale)))
+            landscape = pygame.transform.smoothscale(landscape, size)
+            crop = pygame.Rect((0, 0), viewport.size)
+            crop.center = landscape.get_rect().center
+            self.background = landscape.subsurface(crop).copy()
         self.base = pygame.transform.smoothscale(source, self.projection.size)
         self.layers = []
         for record in self.layout.data['layers']:
@@ -97,9 +194,20 @@ class LayeredEnvironmentArt:
             self.layers.append({**record,
                 'image': pygame.transform.smoothscale(image, self.projection.size),
                 'screen_depth': self.projection.screen((0, record['depth']))[1]})
+        placement = self.layout.data.get('waterfall')
+        self.waterfall = None
+        if placement is not None:
+            name = placement['image']
+            self.waterfall = WaterfallAnimation(game.assets.get_image(name),
+                game.manifest['images'][name], placement, self.projection)
 
     def blit_base(self, surface):
         surface.blit(self.base, self.projection.origin)
+
+    def blit_ambient(self, surface, elapsed):
+        # Agua decorativa detrás de actores/primeros planos; sin reglas nuevas.
+        if self.waterfall is not None:
+            self.waterfall.blit(surface, elapsed)
 
     def blit_layer(self, surface, layer):
         surface.blit(layer['image'], self.projection.origin)

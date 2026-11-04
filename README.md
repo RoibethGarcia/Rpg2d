@@ -26,8 +26,13 @@ El entorno `.venv` ya preparado localmente no se versiona. No es necesario activ
 .venv/bin/python main.py
 ```
 
+**Ajuste temporal para pruebas:** Vera recibe **3 botiquines** al iniciar cualquier
+partida en la aplicación, incluido el reinicio y los accesos directos por mapa.
+No se reponen al viajar ni cambian curación, costos o recogida. El balance base
+del dominio y sus pruebas históricas conservan un botiquín inicial.
+
 Para **probar directamente el puesto** con una partida fresca (30 de vida,
-un botiquín y los dos guardias vivos):
+tres botiquines y los dos guardias vivos):
 
 ```sh
 .venv/bin/python -B main.py --map puesto
@@ -39,7 +44,7 @@ Espacio cede el turno. No hay golpe automático al contacto. El menú y «Nueva 
 conservan el inicio normal en Hondonada; el argumento no cura una partida existente.
 
 Para **probar directamente la planta**, con tres guardias y el jefe vivos, 30 de
-vida, un botiquín inicial y sin credencial:
+vida, tres botiquines iniciales y sin credencial:
 
 ```sh
 .venv/bin/python -B main.py --map planta
@@ -70,11 +75,26 @@ Para ejecutarlo desde otro directorio, pasar rutas absolutas tanto al Python del
 | Espacio o «Fin turno» | Ceder voluntariamente el turno; al agotar los PA termina automáticamente |
 | Escape en partida | Cancelar pasos futuros; termina el paso en curso |
 | F3 en cualquier escenario | Alternar diagnóstico de rutas y escaleras; apagado al iniciar |
+| Botones «Zoom +» / «Zoom −» sobre el mapa | Acercar/alejar entre 100 %, 125 % y 150 % |
 | «Volver al menú» | Regresar al menú; «Comenzar» crea estado limpio |
 | Escape en victoria/derrota | Volver al menú |
 | Cerrar ventana / «Salir» en menú | Cerrar Pygame ordenadamente |
 
 Las direcciones se refieren a la **rejilla**, no a arriba/abajo de la pantalla isométrica. WASD cancela el recorrido y prepara un paso nuevo después del actual. El clic en paneles de UI no atraviesa al mundo. No hay atajos numéricos de habilidades.
+
+El zoom comienza en **100 % (vista general)**. Al acercar, la cámara sigue el pie
+de Vera durante el movimiento y se limita a los bordes de la vista general; cerca
+de ellos Vera no queda necesariamente centrada. El nivel se conserva al viajar
+entre mapas, pero volver al menú o comenzar otra partida restablece el 100 %.
+Los clics seleccionan las casillas visibles con la transformación inversa de la
+cámara. Los paneles, botones y diálogos mantienen su tamaño y el diálogo captura
+también los botones de zoom. No cambia alcance, movimiento, PA ni turnos.
+
+Se amplía la composición raster del mundo ya preparada (incluidas capas,
+personajes, ataques y marcadores), no los paneles. Es una solución acotada para
+estos niveles de zoom: **aumenta el tamaño, pero no recupera detalle original** y
+puede suavizar la imagen. Reutiliza dos buffers fijos; no carga recursos ni vuelve
+a preparar sprites por cada cambio de nivel.
 
 ### Primer incremento de ataques
 
@@ -90,6 +110,85 @@ letal), viajar, cambiar escena o reiniciar se cancela: por ahora un golpe letal
 NO garantiza mostrar el clip completo. Movimiento y espalda conservan estáticos;
 no hay arena nueva ni ciclos de caminar. La legibilidad del ritmo queda pendiente
 de evaluación humana. [Contrato y evidencias](docs/ATAQUES.md).
+
+### Fondo de La Hondonada
+
+El paisaje aportado se dibuja detrás del escenario inicial, fijo al área del
+mundo incluso con zoom. No tiene colisiones ni zonas explorables. Se conserva
+la placa original: una máscara de presentación vuelve transparente únicamente
+su negro exterior conectado a los bordes, sin eliminar sombras interiores ni
+cambiar posiciones de personajes, objetos o interfaz.
+[Procedencia y límites](assets/provenance/hondonada-background.md).
+
+### Fondo del Puesto de Control
+
+El segundo escenario utiliza `Paisaje industrial al atardecer.png` como fondo
+estático, con el mismo sistema de transparencia exterior y composición fuera
+del zoom. No modifica navegación, colisiones ni posiciones. La imagen de ejemplo
+con personajes y textos se usa solo como referencia visual, no como placa.
+[Procedencia y límites](assets/provenance/puesto-background.md).
+
+### Fondo de la Planta
+
+El último escenario utiliza `Cañón industrial al atardecer (1).png`
+como fondo fijo detrás de su placa original, con transparencia exterior y sin
+colisiones ni exploración adicionales. Mantiene zoom, personajes, objetos y UI
+en sus posiciones actuales. Este cañón con terrazas rocosas sustituye al fondo
+anterior de lago. `Instalación industrial al atardecer.png` se usa
+solo como referencia visual, para no duplicar personajes y etiquetas pintados.
+[Procedencia y límites](assets/provenance/planta-background.md).
+
+### Cascada de La Hondonada
+
+La cascada del extremo sudeste del pueblo tiene una superposición ambiental de
+**ocho cuadros a 10 FPS**, integrada sobre el agua pintada y detrás de los
+primeros planos. Respeta el zoom, se pausa durante los diálogos y vuelve al primer
+cuadro al iniciar una partida nueva. No cambia navegación, PA ni turnos; el agua
+del puesto y de la planta permanece estática. El recurso se prepara una sola vez.
+[Procedencia y límites de la cascada](assets/provenance/waterfall.md).
+
+### Ambientación sonora por escenario
+
+| Escenario | Pista |
+|---|---|
+| La Hondonada (inicial) | `prologue.mp3` |
+| El Puesto de Control (segundo) | `Heroic Demise (New).mp3` |
+| Planta (tercero) | `Gran Batalla.mp3` |
+
+Las pistas se reproducen en bucle, con volumen inicial del 35 %, separadas del
+canal de efectos de botones. Continúan durante exploración, combate y diálogos;
+no se recargan por frame. Al viajar se sustituye la pista por la del destino;
+al regresar o comenzar otra partida se reproduce desde el principio.
+Volver al menú, ganar, perder o cerrar detiene la ambientación.
+Los inicios directos `--map puesto` y `--map planta` también usan la pista
+correspondiente a su escenario.
+
+El menú, los créditos y la derrota no tienen ambientación propia. Para asociar
+futuras pistas se añade una entrada por ID de mapa en `ambiences` de
+`assets/manifest.json`, con volumen y procedencia. Los tres MP3 aportados se
+conservan intactos dentro del proyecto: **autoría y condiciones de redistribución
+pendientes de confirmar**. Las pruebas SDL dummy verifican
+reproducción y transiciones, no la mezcla audible ni la unión del bucle.
+[Procedencia de prologue](assets/provenance/prologue.md) ·
+[Procedencia de Heroic Demise](assets/provenance/heroic-demise.md) ·
+[Procedencia de Gran Batalla](assets/provenance/gran-batalla.md).
+
+### Sonidos por golpe de combate
+
+Vera usa `hit01.mp3.flac` para **Llave** y `hit02.mp3.flac` para **Potente**;
+los guardias usan `hit03.mp3.flac` y el jefe `hit07.mp3.flac`. Son asignaciones
+fijas, sin selección aleatoria, con volumen inicial del 55 % por efecto.
+
+Se reproduce una muestra por cada golpe válido que aplica daño, también en los
+ataques sucesivos del mismo turno y en los letales. Dibujar cuadros de animación
+o rechazar una orden no repite el golpe. Los efectos pueden solaparse sin cortar
+sus colas ni la música; el ataque válido ya no añade el tono UI de confirmación.
+No cambia daño, PA ni ritmo de la IA. Menú, viaje, reinicio y cierre limpian los
+efectos; el último golpe puede terminar al pasar a derrota.
+
+Los cuatro FLAC se conservan intactos: **licencia y redistribución pendientes
+de confirmar**. Las pruebas SDL dummy no sustituyen la escucha nativa para
+evaluar volumen y sincronización. [Procedencia y límites](assets/provenance/combat-sounds.md).
 
 ### Aldeanos de La Hondonada
 
@@ -126,9 +225,23 @@ sin zoom ni cámara libre. [Hondonada](docs/integracion-assets/01-la-hondonada.m
 3. Vencer al jefe para obtener automáticamente su credencial.
 4. Llegar a una casilla **conectada vecina** a la válvula final `(22,14)` y pulsar E, fuera de combate y sin pasos pendientes. Solo entonces vuelve el agua; derrotar al jefe no termina la campaña automáticamente.
 
-Cada turno dispone de **6 PA**: caminar 1, llave 2 (daño 4), potente 3 (daño 7), botiquín 2 (cura hasta 8). Vera comienza con 30 de vida y un botiquín; guardias 16 de vida/daño 3; jefe **48** de vida/daño 4. Enemigos gastan 2 PA por ataque. El botiquín se usa solo en combate. Agotar los PA con una acción válida **termina el turno automáticamente**; Espacio permite cederlo antes.
+Cada turno dispone de **6 PA**: caminar 1, llave 2 (daño 4), potente 3 (daño 7), botiquín 2 (cura hasta 8). Vera comienza con 30 de vida y **3 botiquines temporalmente para pruebas** (balance base: uno); guardias 16 de vida/daño 3; jefe **48** de vida/daño 4. Enemigos gastan 2 PA por ataque. El botiquín se usa solo en combate. Agotar los PA con una acción válida **termina el turno automáticamente**; Espacio permite cederlo antes.
 
-**Maniobrar importa:** combinar un potente y tres pasos de retirada puede impedir que el rival gaste todo su turno atacando. La campaña automatizada vence a **cinco guardias y el jefe**, activa la válvula y termina con **2 de vida y ningún botiquín**. Contra cada guardia hace potente+retirada en los primeros dos turnos y remata con básica (curando antes en guardias 2–5); contra el jefe se retira en el primer turno y después combina dos potentes. Demuestra posibilidad, no balance cómodo ni validación con jugadores.
+**Maniobrar importa:** combinar un potente y tres pasos de retirada puede impedir que el rival gaste todo su turno atacando. La campaña automatizada del dominio, con un botiquín inicial de balance base, vence a **cinco guardias y el jefe**, activa la válvula y termina con **2 de vida y ningún botiquín**. Contra cada guardia hace potente+retirada en los primeros dos turnos y remata con básica (curando antes en guardias 2–5); contra el jefe se retira en el primer turno y después combina dos potentes. Demuestra posibilidad, no balance cómodo ni validación con jugadores.
+
+### Créditos al ganar
+
+Al activar la válvula final se muestra la imagen de créditos aportada por el
+usuario, completa y sin deformación. Haz clic en **«Volver al menú»**, o pulsa
+**Escape/Enter**; desde el menú, «Comenzar» crea una partida limpia. La pantalla
+de derrota conserva sus botones. No se añaden créditos nuevos en este incremento.
+
+El texto de créditos está dentro del PNG; futuras ampliaciones requieren actualizar
+el recurso y su [procedencia](assets/provenance/credits.md). **Atribución pendiente
+de corregir en la imagen:** menciona OpenGameArt, pero los sonidos UI cargados son
+de ObsydianX (itch.io); la procedencia/licencia de los FLAC de golpes y las pistas
+aportadas no está verificada. El registro de recursos y pendientes sigue en
+[ASSETS](docs/ASSETS.md) y el manifiesto. No se alteró la imagen sin autorización.
 
 ## Pruebas, sin builds
 
