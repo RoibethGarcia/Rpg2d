@@ -198,13 +198,13 @@ Esta alternancia es la del núcleo inicial; no fija el orden de turnos de la amp
 
 Una acción inválida o sin PA suficientes no consume puntos ni ítems y no produce
 su efecto. Tampoco se cobra por intentar caminar contra una pared.
-### Balance inicial confirmado, sujeto a pruebas
+### Balance vigente, sujeto a pruebas
 
 | Parámetro | Valor |
 | --- | --- |
 | Vera | 30 de vida; básico 4 de daño; potente 7 |
 | Tres guardias | 16 de vida y 3 de daño cada uno |
-| Jefe | **48 de vida** y 4 de daño |
+| Jefe | **42 de vida** y 4 de daño |
 | Ataque enemigo | 2 PA; solo vecino, mismo alcance Manhattan 1 |
 | Botiquines | Cura hasta 8; uno inicial y dos recogibles antes del jefe |
 
@@ -217,10 +217,17 @@ Un enemigo con vida 0 deja de ocupar y actuar. Al vencer se vuelve a exploració
 conservando vida, inventario, consumos y progreso; si es el jefe se obtiene la credencial.
 Una **nueva partida**, a diferencia del final de combate, sí reinicia todo el estado.
 
-El jefe de 48 de vida exige aprovechar geometría y retirada. La prueba automatizada del
-recorrido completo vence a los tres guardias y al jefe, recoge los dos suministros,
-usa tres botiquines y activa el panel con **2 de vida y 0 botiquines**. Esto demuestra
-un recorrido posible, NO equilibrio validado ni dificultad adecuada para jugadores nuevos.
+El 6/11/2026 se ajustó la vida del jefe de campaña de 48 a **42**, manteniendo
+daño, PA y costos. Una prueba de duelo aislado sobre el mapa real comprueba que
+Vera, entrando con 30 de vida, vence con seis potentes en tres turnos y conserva
+**6 de vida**, sin curarse ni retirarse. No garantiza ese margen si llega herida
+ni equivale a validación de dificultad con jugadores.
+
+La fixture histórica de `data/world.json` conserva el jefe de 48 de vida y su
+recorrido de tres guardias, dos suministros y final con **2 de vida y 0 botiquines**.
+La campaña vigente carga el jefe de `data/planta.json`; su recorrido automatizado
+con cinco guardias y retirada inicial ante el jefe también termina con **2 de vida
+y 0 botiquines**. Son estrategias posibles, NO equilibrio validado.
 No cambiar cifras silenciosamente si una prueba de balance falla.
 
 ## 7. Movimiento por clic y costo de recorrido

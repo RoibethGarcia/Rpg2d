@@ -13,9 +13,10 @@ os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 import pygame
 from game.app import LastValveGame
 from game.scenes import VictoryScene
+from game.render import Typography
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_SHA256 = '39f30f52f82ffc152264eac06083e04a854abcdd5142e9dee32d33a5331196dc'
+SOURCE_SHA256 = 'ec5f1a41fa76d887baf13f699d0256d76eb97b8715267dd441325d562a64598e'
 
 
 class CreditsTests(unittest.TestCase):
@@ -33,8 +34,9 @@ class CreditsTests(unittest.TestCase):
         self.assertIn('credits', self.game.manifest['images'])
         entry = self.game.manifest['images']['credits']
         self.assertEqual(hashlib.sha256((ROOT / entry['path']).read_bytes()).hexdigest(), SOURCE_SHA256)
-        self.assertEqual(entry['size'], [1672, 940])
-        self.assertEqual(entry['menu_button'], [704, 848, 266, 64])
+        self.assertEqual(entry['size'], [1645, 956])
+        self.assertEqual(entry['menu_button'], [671, 839, 299, 60])
+        self.assertEqual(entry['original_path'], 'Pantalla de créditos en ruinas pixel art.png')
         self.assertEqual(entry['source_type'], 'user_supplied')
         self.assertEqual(entry['redistribution_status'], 'pending_confirmation')
 
@@ -43,7 +45,7 @@ class CreditsTests(unittest.TestCase):
         self.click((640, 492))  # Antigua posición de Nueva partida: ahora solo imagen.
         self.assertIs(self.game.current_scene, self.game.scenes['victory'])
         with patch.object(self.game, 'sound') as sound:
-            self.click((640, 714))  # Centro del botón pintado con bandas incluidas.
+            self.click((638, 704))  # Centro del nuevo botón pintado, con bandas.
         self.assertIs(self.game.current_scene, self.game.scenes['menu'])
         sound.assert_called_once_with('back')
 
@@ -54,7 +56,7 @@ class CreditsTests(unittest.TestCase):
         expected = source.get_rect().fit(self.game.screen.get_rect())
         expected.center = self.game.screen.get_rect().center
         self.assertEqual(scene.image_rect, expected)
-        self.assertAlmostEqual(expected.width / expected.height, 1672 / 940, delta=.003)
+        self.assertAlmostEqual(expected.width / expected.height, 1645 / 956, delta=.003)
         with patch.object(self.game.assets, 'load_image') as load, \
                 patch.object(pygame.transform, 'smoothscale') as scale:
             scene.draw(self.game.screen)
@@ -64,6 +66,17 @@ class CreditsTests(unittest.TestCase):
         self.assertEqual(self.game.screen.get_at((0, 0))[:3], (0, 0, 0))
         self.assertEqual(pygame.image.tobytes(self.game.screen.subsurface(expected), 'RGB'),
                          pygame.image.tobytes(scene.image, 'RGB'))
+
+    def test_new_art_is_rendered_without_overlays_or_source_mutation(self):
+        source = self.game.assets.get_image('credits')
+        before = pygame.image.tobytes(source, 'RGBA')
+        with patch.object(Typography, 'text', autospec=True, side_effect=Typography.text) as text:
+            scene = VictoryScene(self.game)
+        text.assert_not_called()
+        original = pygame.transform.smoothscale(source.convert(), scene.image_rect.size)
+        self.assertEqual(pygame.image.tobytes(scene.image, 'RGB'),
+                         pygame.image.tobytes(original, 'RGB'))
+        self.assertEqual(pygame.image.tobytes(source, 'RGBA'), before)
 
     def test_hitbox_follows_letterboxing_in_taller_viewport(self):
         game = SimpleNamespace(screen=pygame.Surface((640, 800)), assets=self.game.assets,
@@ -77,8 +90,8 @@ class CreditsTests(unittest.TestCase):
         x, y = scene.image_rect.topleft
         w, h = scene.image_rect.size
         self.assertEqual(scene.return_rect, pygame.Rect(
-            x + round(704 * w / 1672), y + round(848 * h / 940),
-            round(266 * w / 1672), round(64 * h / 940)))
+            x + round(671 * w / 1645), y + round(839 * h / 956),
+            round(299 * w / 1645), round(60 * h / 956)))
 
     def test_escape_and_enter_return_without_restarting_state(self):
         self.game.start_new_game()

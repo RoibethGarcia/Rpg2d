@@ -357,7 +357,7 @@ class TerminalScene(Scene):
 
 
 class VictoryScene(Scene):
-    """Créditos ilustrados: el botón forma parte del PNG, no se repinta."""
+    """Créditos aportados intactos, con escala proporcional y botón ilustrado."""
     def __init__(self, game):
         super().__init__(game)
         source = game.assets.get_image('credits')

@@ -1048,8 +1048,8 @@
     "credits": {
       "path": "assets/images/ui/credits.png",
       "size": [
-        1672,
-        940
+        1645,
+        956
       ],
       "anchor": [
         0,
@@ -1057,19 +1057,19 @@
       ],
       "background": "opaque",
       "menu_button": [
-        704,
-        848,
-        266,
-        64
+        671,
+        839,
+        299,
+        60
       ],
       "source_type": "user_supplied",
-      "source": "Provided by the user in this project conversation on 2026-10-30.",
+      "source": "Provided by the user in this project conversation on 2026-11-06.",
       "author": "User-supplied image; authorship and model provenance not independently verified.",
       "redistribution_status": "pending_confirmation",
       "provenance_file": "assets/provenance/credits.md",
-      "original_path": "Pantalla de créditos industrial al atardecer.png",
+      "original_path": "Pantalla de créditos en ruinas pixel art.png",
       "modifications": "Original PNG bytes unchanged. Proportional runtime scaling with letterboxing; cached once.",
-      "sha256": "39f30f52f82ffc152264eac06083e04a854abcdd5142e9dee32d33a5331196dc",
+      "sha256": "ec5f1a41fa76d887baf13f699d0256d76eb97b8715267dd441325d562a64598e",
       "usage": "victory_credits_screen"
     },
     "hondonada_background": {

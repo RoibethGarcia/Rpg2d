@@ -23,7 +23,8 @@ class PlantaTests(unittest.TestCase):
         self.assertTrue(state.grid.adjacency, 'Planta necesita navegación sobre su ilustración')
         self.assertEqual(set(state.enemies), {'guard3', 'guard4', 'guard5', 'boss'})
         self.assertEqual([(u.hp, u.damage) for u in state.enemies.values()],
-                         [(16, 3), (16, 3), (16, 3), (48, 4)])
+                         [(16, 3), (16, 3), (16, 3), (42, 4)])
+        self.assertEqual(state.enemies['boss'].max_hp, 42)
         self.assertEqual({o['id'] for o in state.objects if o['kind'] == 'medkit'}, {'kit2', 'kit3'})
         occupied = {u.cell for u in state.enemies.values()}
         for obj in state.objects:
@@ -93,6 +94,33 @@ class PlantaTests(unittest.TestCase):
             before = deepcopy({k: v for k, v in vars(state).items() if k != 'message'})
             self.assertFalse(state.interact(), reason)
             self.assertEqual({k: v for k, v in vars(state).items() if k != 'message'}, before, reason)
+
+    def test_full_health_vera_beats_boss_with_six_powers_without_healing_or_retreat(self):
+        # Encuentro aislado sobre el mapa real, no un recorrido de campaña.
+        state = enter_planta()
+        boss = state.enemies['boss']
+        state.player.cell = next(iter(state.grid.neighbors(boss.cell)))
+        positions = (state.player.cell, boss.cell)
+        medkits = state.medkits
+        self.assertEqual(state.player.hp, 30)
+        state._begin_combat(boss)
+
+        for round_index in range(3):
+            self.assertTrue(state.attack(power=True), state.message)
+            self.assertTrue(state.attack(power=True), state.message)
+            if round_index < 2:
+                self.assertEqual(state.turn, 'enemy')
+                for _ in range(500):
+                    state.update(.02)
+                    if state.turn == 'player' or state.mode == 'defeat':
+                        break
+                self.assertEqual((state.mode, state.turn), ('combat', 'player'))
+                self.assertEqual(state.player.hp, 30 - 12 * (round_index + 1))
+
+        self.assertEqual((state.mode, boss.hp, state.player.hp), ('exploration', 0, 6))
+        self.assertTrue(state.credential)
+        self.assertEqual(state.medkits, medkits)
+        self.assertEqual((state.player.cell, boss.cell), positions)
 
     def test_boss_death_grants_credential_not_victory_and_persists_on_return(self):
         state = enter_planta()

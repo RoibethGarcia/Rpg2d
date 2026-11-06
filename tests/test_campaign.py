@@ -200,7 +200,8 @@ class CampaignTests(unittest.TestCase):
         first.maps['puesto'].patrol_index['guard1'] = 2
         self.assertEqual(clean.maps['puesto'].patrols['guard1']['cells'][0], [8, 10])
         self.assertNotEqual(clean.maps['puesto'].objects[0]['cell'], (99, 99))
-        self.assertEqual(clean.maps['planta'].enemies['boss'].hp, 48)
+        self.assertEqual(clean.maps['planta'].enemies['boss'].hp, 42)
+        self.assertEqual(clean.maps['planta'].enemies['boss'].max_hp, 42)
         self.assertEqual((clean.map_id, clean.player.hp, clean.player.ap, clean.medkits, clean.credential),
                          ('hondonada', 30, 6, 1, False))
         self.assertFalse(clean.route or clean.motions)

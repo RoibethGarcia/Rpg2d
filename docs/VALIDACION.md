@@ -572,3 +572,84 @@ regresiones completas de campaña, auto-turn, alcance, diálogos y recursos.
 `git diff --check`: limpio. No quedaron hallazgos de código de este incremento.
 Se corrigió únicamente una frase heredada del README que decía que 0 PA no
 terminaba turno: el auto-turn preexistente sí lo hace tras acción válida.
+
+## Ajuste del jefe de campaña — 6 de noviembre de 2026
+
+La vida del jefe en `data/planta.json` baja de **48 a 42**. No se modifican
+daño (4), PA (6), costo de ataque enemigo (2), IA, guardias ni botiquines.
+`data/world.json` mantiene 48 HP como fixture histórica explícita; las cifras
+y ejecuciones anteriores de este documento conservan su contexto original.
+
+**RED observado:** se escribieron primero la regresión de seis potentes y las
+expectativas de 42 HP al cargar, reiniciar y arrancar directamente en planta.
+Con los datos anteriores, 25 pruebas focalizadas dieron **4 fallos**: vida 48
+en lugar de 42 y jefe todavía vivo con 6 HP después del sexto potente.
+
+**GREEN observado:** tras cambiar únicamente el dato de vida, el siguiente
+comando pasó **29 pruebas en 2.964 s, OK, salida 0**:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  .venv/bin/python -B -m unittest tests.test_planta.PlantaTests \
+  tests.test_campaign tests.test_startup tests.test_playthrough -v
+```
+
+La nueva regresión prepara un **duelo aislado sobre el mapa real**, no un
+recorrido completo: Vera empieza adyacente con 30 HP, hace dos potentes por
+turno y recibe 12 de daño en cada una de las dos respuestas enemigas. Vence
+en su tercer turno con **6 HP**, sin curarse, mover a nadie ni consumir kits;
+obtiene la credencial y vuelve a exploración, no a victoria automática.
+El recorrido completo de campaña existente también pasa y conserva su final
+de **2 HP y 0 kits** con retirada inicial: no se reemplazó su estrategia.
+
+Sin builds, empaquetado, instalaciones ni commits. No se realizó partida manual
+ni se certifica dificultad adecuada para jugadores por pasar estas pruebas.
+
+**Regresión completa:** **317 pruebas en 106.063 s, OK, salida 0**, ejecutadas con:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  .venv/bin/python -B -m unittest discover -s tests -v
+```
+
+`git diff --check`: sin errores. Se conservaron los cambios locales previos de
+créditos, presentación y documentación.
+
+## Reemplazo de créditos por arte de ruinas — 6 de noviembre de 2026
+
+Petición: sustituir la pantalla por «Pantalla de créditos en ruinas pixel art.png».
+Se copió el PNG original sin alterar bytes, se actualizaron tamaño **1645×956**,
+hash, procedencia y botón `[671,839,299,60]` en el manifiesto. Se retiró la
+superposición anterior de sonido y música porque el nuevo arte ya contiene sus
+textos. No se modificó el balance del jefe ni la lógica de victoria/derrota.
+
+**TDD:** antes de implementar se observaron fallos por hash, proporciones y
+hitbox de la imagen anterior. La regresión específica de ausencia de paneles
+falló por las 17 llamadas de texto superpuesto existentes. Tras el reemplazo:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  .venv/bin/python -B -m unittest tests.test_credits tests.test_assets -v
+```
+
+**15 pruebas en 7.079 s, OK, salida 0**. Comprueban integridad de bytes, imagen
+sin superposiciones ni mutación del recurso, escala proporcional cacheada,
+hitbox en viewport alto, retorno por clic/Escape/Enter, QUIT y válvula final.
+
+Se inspeccionó `/tmp/rpg2d-credits-ruins-preview.png`, render real de la escena
+con SDL dummy a 1280×800: encuadre completo, textos y botón sin paneles encima.
+Imagen en `(0,29,1280,743)`; botón clicable en `(522,681,233,47)`.
+`cmp` confirmó igualdad byte a byte con el archivo aportado. Las atribuciones
+impresas no se toman como prueba de licencias: los pendientes de procedencia
+se mantienen documentados. No hubo builds, instalaciones, commits ni prueba
+manual nativa o de sonido físico.
+
+**Regresión completa:** **316 pruebas en 109.802 s, OK, salida 0**:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  .venv/bin/python -B -m unittest discover -s tests -q
+```
+
+El conteo pasa de 317 a 316 porque dos pruebas del antiguo panel superpuesto
+se sustituyen por una regresión de imagen intacta. `git diff --check`: limpio.

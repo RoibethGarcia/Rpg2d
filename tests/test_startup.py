@@ -55,7 +55,8 @@ class StartupStateTests(unittest.TestCase):
             self.assertEqual((state.map_id, state.player.cell, state.player.hp, state.medkits),
                              ('planta', (9,8), 30, 3))
             self.assertEqual(len(state.enemies), 4)
-            self.assertEqual(state.enemies['boss'].hp, 48)
+            boss = state.enemies['boss']
+            self.assertEqual((boss.hp, boss.max_hp, boss.damage), (42, 42, 4))
             self.assertFalse(state.credential or state.collected or state.opened)
             self.assertFalse(state.maps['puesto'].opened)
             game.start_new_game()

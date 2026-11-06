@@ -234,7 +234,13 @@ sin zoom ni cámara libre. [Hondonada](docs/integracion-assets/01-la-hondonada.m
 3. Vencer al jefe para obtener automáticamente su credencial.
 4. Llegar a una casilla **conectada vecina** a la válvula final `(22,14)` y pulsar E, fuera de combate y sin pasos pendientes. Solo entonces vuelve el agua; derrotar al jefe no termina la campaña automáticamente.
 
-Cada turno dispone de **6 PA**: caminar 1, llave 2 (daño 4), potente 3 (daño 7), botiquín 2 (cura hasta 8). Vera comienza con 30 de vida y **3 botiquines temporalmente para pruebas** (balance base: uno); guardias 16 de vida/daño 3; jefe **48** de vida/daño 4. Enemigos gastan 2 PA por ataque. El botiquín se usa solo en combate. Agotar los PA con una acción válida **termina el turno automáticamente**; Espacio permite cederlo antes.
+Cada turno dispone de **6 PA**: caminar 1, llave 2 (daño 4), potente 3 (daño 7), botiquín 2 (cura hasta 8). Vera comienza con 30 de vida y **3 botiquines temporalmente para pruebas** (balance base: uno); guardias 16 de vida/daño 3; jefe **42** de vida/daño 4. Enemigos gastan 2 PA por ataque. El botiquín se usa solo en combate. Agotar los PA con una acción válida **termina el turno automáticamente**; Espacio permite cederlo antes.
+
+**Ajuste del jefe (6/11/2026):** su vida baja de 48 a 42, sin cambiar daño, PA,
+costos ni guardias. En un duelo aislado sobre el mapa real, Vera entrando con
+30 de vida vence con dos potentes por turno durante tres turnos y conserva
+**6 de vida**, sin curarse ni retirarse. La fixture histórica de `data/world.json`
+conserva 48 de vida; la campaña carga al jefe desde `data/planta.json`.
 
 **Maniobrar importa:** combinar un potente y tres pasos de retirada puede impedir que el rival gaste todo su turno atacando. La campaña automatizada del dominio, con un botiquín inicial de balance base, vence a **cinco guardias y el jefe**, activa la válvula y termina con **2 de vida y ningún botiquín**. Contra cada guardia hace potente+retirada en los primeros dos turnos y remata con básica (curando antes en guardias 2–5); contra el jefe se retira en el primer turno y después combina dos potentes. Demuestra posibilidad, no balance cómodo ni validación con jugadores.
 
@@ -243,14 +249,14 @@ Cada turno dispone de **6 PA**: caminar 1, llave 2 (daño 4), potente 3 (daño 7
 Al activar la válvula final se muestra la imagen de créditos aportada por el
 usuario, completa y sin deformación. Haz clic en **«Volver al menú»**, o pulsa
 **Escape/Enter**; desde el menú, «Comenzar» crea una partida limpia. La pantalla
-de derrota conserva sus botones. No se añaden créditos nuevos en este incremento.
+de derrota conserva sus botones.
 
-El texto de créditos está dentro del PNG; futuras ampliaciones requieren actualizar
-el recurso y su [procedencia](assets/provenance/credits.md). **Atribución pendiente
-de corregir en la imagen:** menciona OpenGameArt, pero los sonidos UI cargados son
-de ObsydianX (itch.io); la procedencia/licencia de los FLAC de golpes y las pistas
-aportadas no está verificada. El registro de recursos y pendientes sigue en
-[ASSETS](docs/ASSETS.md) y el manifiesto. No se alteró la imagen sin autorización.
+Desde el 06/11/2026 se utiliza **«Pantalla de créditos en ruinas pixel art.png»**,
+con sus textos de sonido y música integrados. Se muestra el PNG completo, sin
+el panel superpuesto de la versión anterior. El botón ilustrado conserva su
+zona clicable adaptada al nuevo diseño. Las atribuciones impresas no verifican
+licencias: [procedencia](assets/provenance/credits.md), [ASSETS](docs/ASSETS.md)
+y manifiesto conservan los registros reales y los pendientes de redistribución.
 
 ## Pruebas, sin builds
 

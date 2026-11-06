@@ -22,7 +22,7 @@ Estado comprobado el **15 de octubre de 2026**. Distinguir núcleo implementado 
 
 ## Reglas resueltas
 
-Vera 30 de vida; guardias 16; jefe **48**. Daños 4/7 de Vera y 3/4 rivales. Cada turno 6 PA; paso 1, básico 2, potente 3, botiquín 2, ataque enemigo 2. Uno inicial y dos botiquines recogibles, curan hasta 8 sin exceder máximo. Sin curación en exploración ni consumo con vida completa.
+Vera 30 de vida; guardias 16; jefe de campaña **42** desde el 6/11/2026 (fixture histórica: 48). Daños 4/7 de Vera y 3/4 rivales. Cada turno 6 PA; paso 1, básico 2, potente 3, botiquín 2, ataque enemigo 2. Uno inicial y dos botiquines recogibles, curan hasta 8 sin exceder máximo. Sin curación en exploración ni consumo con vida completa.
 
 La orden de movimiento reserva destino y confirma posición/costo al completar cada paso. WASD/Escape cancelan lo pendiente después del paso actual; WASD prepara la nueva dirección. Un nuevo obstáculo detiene sin buscar ruta alternativa. Clic demasiado lejano ejecuta solo el presupuesto disponible y descarta el resto. Al agotar los PA tras una acción válida, el turno termina automáticamente y se descartan ruta y dirección pendientes; ganar el combate tiene prioridad.
 

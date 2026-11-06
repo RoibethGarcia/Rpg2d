@@ -52,8 +52,9 @@ Textos de licencia completos: `assets/licenses/CC0-1.0.txt` (incluido en ZIP de 
 
 ## Créditos de victoria
 
-`assets/images/ui/credits.png` es el PNG **1672×940 RGB opaco** aportado por el
-usuario el 30/10/2026, copiado byte a byte. Se carga como `images.credits` desde
+`assets/images/ui/credits.png` es el PNG **1645×956 RGB opaco** «Pantalla de
+créditos en ruinas pixel art.png», aportado por el usuario el 06/11/2026 y copiado
+byte a byte. Se carga como `images.credits` desde
 el manifiesto y se prepara una única escala proporcional, centrada con bandas
 negras: no se recorta ni se deforma. El botón pintado funciona mediante una zona
 clicable transformada con la imagen; clic izquierdo, Escape o Enter vuelven al
@@ -62,9 +63,13 @@ menú. La derrota conserva su presentación. [Procedencia y ampliaciones futuras
 Autoría/modelo y permiso de redistribución no verificados; **no publicar el PNG
 hasta confirmar condiciones**. Su texto incrustado menciona OpenGameArt para
 sonido, pero el juego carga los cuatro OGG de **ObsydianX — Interface SFX Pack 1**
-documentados arriba y en `sounds` del manifiesto (CC0-1.0). Se conserva el arte
-solicitado intacto; corregir/ampliar esa atribución en una futura edición
-autorizada. Los textos incrustados no sustituyen el inventario de procedencias.
+documentados arriba y en `sounds` del manifiesto (CC0-1.0). La nueva pantalla
+incluye sus créditos de sonido y música en el propio arte: se retira el panel
+superpuesto de la versión anterior. Las atribuciones y la mención CC0 para
+golpes dentro del PNG son contenido aportado, no verificación independiente;
+la autoría y licencias de golpes y música siguen por confirmar. No se edita
+el PNG ni se modifican sus bytes. Los créditos no sustituyen el inventario de
+procedencias ni confirman los permisos de redistribución pendientes.
 
 ## Recursos NO integrados
 
