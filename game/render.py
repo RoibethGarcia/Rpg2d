@@ -198,9 +198,17 @@ class WorldRenderer:
     def reset(self, reset_zoom=True):
         self.actors.clear()
         self.villagers.clear()
+        for art in self.layered_maps.values():
+            if art.effects is not None:
+                art.effects.reset()
         if reset_zoom:
             self.camera.level = 0
         self.configure(self.game.state)
+
+    def update_ambient(self, dt, state):
+        art = self.layered_maps.get(state.map_id)
+        if art is not None and art.effects is not None:
+            art.effects.update(dt)
 
     def update_camera(self, state):
         self.configure(state)
@@ -298,6 +306,11 @@ class WorldRenderer:
         background = art.background if art is not None else None
         target = (self._world_surface if self.camera.zoom != 1 or background is not None
                   else surface)
+        if background is not None:
+            surface.fill(BG)
+            surface.blit(background, WORLD_RECT)
+            if art.effects is not None:
+                art.effects.draw_background(surface)
         result = self._draw_world(target, state, hover)
         # Las salidas pertenecen al mundo, no al panel: también se amplían.
         old_clip = target.get_clip()
@@ -308,9 +321,6 @@ class WorldRenderer:
             x, y = self.projection.center(exit.cell)
             self.type.text(target, f'E: {state.maps[exit.destination].name}', (x - 35, y - 34), 18, color)
         target.set_clip(old_clip)
-        if background is not None:
-            surface.fill(BG)
-            surface.blit(background, WORLD_RECT)
         if self.camera.zoom != 1:
             if background is None:
                 surface.fill(BG)

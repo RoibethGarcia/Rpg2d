@@ -6,6 +6,28 @@
   "image_size": [1448, 1086],
   "grid_size": [24, 16],
   "actor_height": 78,
+  "ambient": {
+    "settings": {
+      "enabled": true,
+      "particle_intensity": 0.65,
+      "max_particles": 36,
+      "max_birds": 3,
+      "smoke_frequency": 1.0,
+      "water_speed": 1.0
+    },
+    "emitters": [
+      {"id": "estufa_oeste", "kind": "smoke", "point": [330, 464]},
+      {"id": "union_deposito", "kind": "steam", "point": [838, 157], "period": 13.7}
+    ],
+    "river": [
+      {"rect": [652, 900, 132, 23], "opacity": 100,
+       "polygon": [[658, 911], [689, 905], [732, 902], [765, 902], [780, 908], [737, 916], [691, 921]]},
+      {"rect": [788, 856, 123, 24], "opacity": 90,
+       "polygon": [[795, 869], [838, 861], [866, 858], [905, 858], [890, 866], [850, 874], [812, 878]]},
+      {"rect": [1004, 817, 114, 24], "opacity": 85,
+       "polygon": [[1010, 831], [1034, 824], [1075, 819], [1105, 822], [1112, 828], [1080, 833], [1036, 837]]}
+    ]
+  },
   "waterfall": {
     "image": "waterfall",
     "rect": [1168, 833, 56, 105],

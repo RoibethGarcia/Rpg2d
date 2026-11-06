@@ -245,6 +245,8 @@ aportadas no está verificada. El registro de recursos y pendientes sigue en
 
 ## Pruebas, sin builds
 
+Efectos del escenario 1: [comportamiento, parámetros y límites visuales](docs/EFECTOS_AMBIENTALES.md).
+
 ```sh
 PYTHONDONTWRITEBYTECODE=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
   .venv/bin/python -m unittest discover -s tests -v

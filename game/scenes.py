@@ -198,9 +198,11 @@ class PlayScene(Scene):
 
     def update(self, dt):
         self._sync_context()
+        before = self.game.state.elapsed
         self.game.state.update(dt)
         self._play_attack_sounds()
         self._sync_context()
+        self.renderer.update_ambient(self.game.state.elapsed - before, self.game.state)
         self._refresh_camera()
 
     def draw(self, surface):

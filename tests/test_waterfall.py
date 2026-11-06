@@ -32,7 +32,10 @@ class WaterfallTests(unittest.TestCase):
         return self.art.waterfall
 
     def render(self):
-        self.renderer.draw(self.game.screen, self.game.state, None)
+        # Este test aísla la cascada. Aves/humo/río tienen sus propias pruebas.
+        with (patch.object(self.art.effects, 'draw_background'),
+              patch.object(self.art.effects, 'draw_smoke')):
+            self.renderer.draw(self.game.screen, self.game.state, None)
         return self.game.screen.copy()
 
     def test_water_changes_while_village_and_gameplay_stay_fixed(self):

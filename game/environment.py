@@ -1,7 +1,7 @@
 """Presentación modular y por capas cacheada; no modifica reglas de campaña."""
-from math import isfinite
-
 import pygame
+
+from game.ambient import BackgroundProjection, EnvironmentalEffects, WaterfallAnimation
 
 
 def transparent_exterior(source, seeds=()):
@@ -32,56 +32,6 @@ def transparent_exterior(source, seeds=()):
                                unsetcolor=(255, 255, 255, 255))
     result.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
     return result
-
-
-class WaterfallAnimation:
-    """Superposición local cacheada: nunca avanza el reloj ni modifica el mundo.
-
-    Un único recorte relativo para TODAS las celdas conserva el anclaje. Los
-    límites enteros de la grilla absorben el píxel sobrante de la hoja original.
-    La máscara autorada limita el agua a la caída, sin pintar caño ni rocas.
-    """
-    def __init__(self, sheet, record, placement, projection):
-        cols, rows = record['grid']
-        crop = pygame.Rect(record['crop'])
-        self.frame_seconds = record['frame_seconds']
-        target = pygame.Rect(placement['rect'])
-        if (cols <= 0 or rows <= 0 or min(crop.size) <= 0
-                or min(target.size) <= 0 or not isfinite(self.frame_seconds)
-                or self.frame_seconds <= 0 or not 0 <= placement['opacity'] <= 255):
-            raise ValueError('Configuración de cascada inválida')
-        self.position = tuple(round(v) for v in projection.screen(target.topleft))
-        size = tuple(max(1, round(v * projection.scale)) for v in target.size)
-        mask = pygame.Surface(size, pygame.SRCALPHA)
-        pygame.draw.polygon(mask, 'white', [
-            (round((x - target.x) * size[0] / target.w),
-             round((y - target.y) * size[1] / target.h))
-            for x, y in placement['polygon']])
-        frames, source_rects = [], []
-        for row in range(rows):
-            for col in range(cols):
-                x, y = col * sheet.get_width() // cols, row * sheet.get_height() // rows
-                cell = pygame.Rect(x, y, (col + 1) * sheet.get_width() // cols - x,
-                                   (row + 1) * sheet.get_height() // rows - y)
-                rect = crop.move(x, y)
-                if not cell.contains(rect):
-                    raise ValueError('Recorte de cascada fuera de su celda')
-                image = pygame.transform.smoothscale(sheet.subsurface(rect), size)
-                image.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-                image.set_alpha(placement['opacity'])
-                frames.append(image)
-                source_rects.append(rect)
-        self.frames = tuple(frames)
-        self.source_rects = tuple(source_rects)
-
-    def frame_index(self, elapsed):
-        if not isfinite(elapsed) or elapsed < 0:
-            raise ValueError('Tiempo de cascada debe ser finito y no negativo')
-        # Tolerancia solo para restas/acumulaciones del reloj en fronteras exactas.
-        return int((elapsed + 1e-9) / self.frame_seconds) % len(self.frames)
-
-    def blit(self, surface, elapsed):
-        surface.blit(self.frames[self.frame_index(elapsed)], self.position)
 
 
 class EnvironmentArt:
@@ -184,6 +134,8 @@ class LayeredEnvironmentArt:
             crop = pygame.Rect((0, 0), viewport.size)
             crop.center = landscape.get_rect().center
             self.background = landscape.subsurface(crop).copy()
+            background_projection = BackgroundProjection(scale,
+                (viewport.x - crop.x, viewport.y - crop.y))
         self.base = pygame.transform.smoothscale(source, self.projection.size)
         self.layers = []
         for record in self.layout.data['layers']:
@@ -200,14 +152,27 @@ class LayeredEnvironmentArt:
             name = placement['image']
             self.waterfall = WaterfallAnimation(game.assets.get_image(name),
                 game.manifest['images'][name], placement, self.projection)
+        self.effects = None
+        ambient = self.layout.data.get('ambient')
+        if ambient is not None:
+            bird_name = ambient.get('bird_image')
+            self.effects = EnvironmentalEffects(ambient, self.projection,
+                background_projection, viewport,
+                game.assets.get_image(bird_name) if bird_name else None,
+                game.manifest['images'][bird_name] if bird_name else None)
 
     def blit_base(self, surface):
         surface.blit(self.base, self.projection.origin)
 
     def blit_ambient(self, surface, elapsed):
         # Agua decorativa detrás de actores/primeros planos; sin reglas nuevas.
+        if self.effects is not None and not self.effects.config.enabled:
+            return
         if self.waterfall is not None:
-            self.waterfall.blit(surface, elapsed)
+            speed = self.effects.config.water_speed if self.effects is not None else 1
+            self.waterfall.blit(surface, elapsed * speed)
+        if self.effects is not None:
+            self.effects.draw_smoke(surface)
 
     def blit_layer(self, surface, layer):
         surface.blit(layer['image'], self.projection.origin)
