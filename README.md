@@ -201,8 +201,13 @@ evaluar volumen y sincronización. [Procedencia y límites](assets/provenance/co
 
 ### Aldeanos de La Hondonada
 
-Hay **dos habitantes estáticos** que reutilizan el artesano con taza: uno junto
-a la plaza central y otro en el ramal sur de la plaza. Acércate a **1–2 pasos
+Hay **dos habitantes** que reutilizan el artesano con taza: el de la plaza recorre
+el ramal del mercado de ida y vuelta; el de la terraza permanece quieto.
+La ruta está en `data/hondonada.json`, dentro de `villager_plaza.patrol`:
+`cells` define los pasos, `pause` la espera (1.2 s) y `duration` cada paso (0.48 s).
+El aldeano espera si Vera ocupa o reserva su siguiente casilla; durante el paso
+bloquea origen y destino. El recorrido no consume recursos ni bloquea los viajes.
+Acércate a **1–2 pasos
 transitables** y pulsa **E**: cuenta el camino conectado, no la distancia visual.
 Muros, ocupantes y objetos bloqueantes impiden hablar a través de ellos. No se puede atravesar
 su casilla ni iniciar combate con ellos. Tienen dos páginas propias y no conceden
@@ -212,8 +217,10 @@ La conversación usa el marco industrial y retrato de la imagen aportada, con
 nombre, texto y continuación dinámicos. Mientras está abierta, el mundo se pausa
 y no se puede mover, combatir ni pulsar botones del HUD a través de ella.
 E/Enter/Espacio o «Continuar» avanza; Escape cierra. El historial de cada aldeano
-persiste al viajar; «Comenzar» crea un estado limpio. No hay animación ni espalda
-nueva del aldeano. [Assets y procedencia](assets/provenance/villager-dialogue.md).
+persiste al viajar, al igual que su posición y recorrido; «Comenzar» crea un estado
+limpio. El desplazamiento se interpola con la imagen existente: no se han añadido
+fotogramas de piernas ni una vista de espalda del aldeano.
+[Assets y procedencia](assets/provenance/villager-dialogue.md).
 
 Entre aldeanos y salidas se elige el objetivo alcanzable más cercano; en empate,
 la salida conserva prioridad. Si no se puede viajar, se permite otra interacción

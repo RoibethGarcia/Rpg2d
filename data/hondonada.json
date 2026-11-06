@@ -555,6 +555,11 @@
       ],
       "blocking": true,
       "sprite": "villager",
+      "patrol": {
+        "cells": [[16, 1], [15, 1], [14, 1], [13, 1], [14, 1], [15, 1]],
+        "pause": 1.2,
+        "duration": 0.48
+      },
       "dialogue": [
         "Vera, si la última válvula cae, el pueblo no sobrevivirá.",
         "La Custodia cerró el suministro desde la planta. El acceso al puesto está al sur; sigue las escaleras."

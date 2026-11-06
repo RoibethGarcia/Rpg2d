@@ -81,6 +81,7 @@ class MapState:
     exits: dict[str, MapExit] = field(default_factory=dict)
     reserved_spawns: set[Cell] = field(default_factory=set)
     talked_to: set[str] = field(default_factory=set)
+    npc_motions: dict[str, Motion] = field(default_factory=dict)
 
     def spawn_available(self, cell):
         return (_valid_cell(cell) and cell in self.reserved_spawns and self.grid.walkable(cell)
@@ -202,7 +203,9 @@ class GameState:
                 and self.turn == 'player' and self.player.hp > 0)
 
     def blocking_objects(self):
-        return {tuple(o['cell']) for o in self.objects if o.get('blocking')}
+        cells = {tuple(o['cell']) for o in self.objects if o.get('blocking')}
+        cells.update(m.end for m in self.world.npc_motions.values())
+        return cells
 
     def occupied(self, exclude=None):
         units = [self.player, *self.enemies.values()]
@@ -409,6 +412,17 @@ class GameState:
                         or not npc.get('speaker') or not npc.get('sprite')
                         or not npc.get('dialogue') or not all(isinstance(p, str) and p.strip() for p in npc['dialogue'])):
                     raise ValueError(f'{map_id}: habitante inválido {npc["id"]}')
+                if 'patrol' in npc:
+                    patrol = npc['patrol']
+                    cells = [tuple(c) for c in patrol['cells']]
+                    index = world.patrol_index.get(npc['id'], 0)
+                    if (len(cells) < 2 or cells[index] != cell
+                            or patrol.get('pause', 1.2) < 0 or patrol.get('duration', .48) <= 0
+                            or any(not _valid_cell(c) or not world.grid.walkable(c)
+                                   or c in world.reserved_spawns for c in cells)
+                            or any(not world.grid.can_step(a, b)
+                                   for a, b in zip(cells, cells[1:] + cells[:1]))):
+                        raise ValueError(f'{map_id}: recorrido inválido {npc["id"]}')
             for uid, patrol in world.patrols.items():
                 cells = [tuple(c) for c in patrol['cells']]
                 if (uid not in world.enemies or not cells
@@ -439,6 +453,12 @@ class GameState:
             return 0
         path = self.grid.find_path(self.player.cell, cell, occupied, occupied_goal)
         return len(path) if path and len(path) <= 2 else None
+
+    def npc_interaction_distance(self, npc):
+        # Al caminar, la reserva del destino no debe ocultar al interlocutor.
+        motion = self.world.npc_motions.get(npc['id'])
+        cell = motion.end if motion is not None else tuple(npc['cell'])
+        return self.interaction_distance(cell, occupied_goal=True)
 
     def travel(self, exit_id):
         """Viaje atómico: validar todo antes de cambiar el mapa activo."""
@@ -480,7 +500,7 @@ class GameState:
         for obj in self.objects:
             if obj['kind'] != 'npc' or obj['id'] in self.collected or obj['id'] in self.opened:
                 continue
-            steps = self.interaction_distance(tuple(obj['cell']), occupied_goal=True)
+            steps = self.npc_interaction_distance(obj)
             if steps is not None and steps > 0:
                 candidates.append((steps, 1, obj))
         travel_error = None
@@ -574,12 +594,40 @@ class GameState:
                 elif self.route:
                     self._advance_route()
         if self.mode == 'exploration':
+            self._update_villagers(dt)
             self._update_patrols(dt)
         elif self.mode == 'combat' and self.turn == 'enemy' and not self.motions:
             self._enemy_wait -= dt
             if self._enemy_wait <= 1e-9:
                 self._enemy_action()
                 self._enemy_wait = ENEMY_ACTION_DELAY
+
+    def _update_villagers(self, dt):
+        """Pasos ambientales separados de las acciones y PA del combate."""
+        for npc in self.objects:
+            if npc['kind'] != 'npc' or 'patrol' not in npc:
+                continue
+            uid, patrol = npc['id'], npc['patrol']
+            cells = patrol['cells']
+            index = self._patrol_index.get(uid, 0)
+            motion = self.world.npc_motions.get(uid)
+            if motion is not None:
+                motion.elapsed += dt
+                if motion.elapsed + 1e-9 >= motion.duration:
+                    npc['cell'] = motion.end
+                    del self.world.npc_motions[uid]
+                    self._patrol_index[uid] = (index + 1) % len(cells)
+                    self._patrol_wait[uid] = patrol.get('pause', 1.2)
+                continue
+            self._patrol_wait[uid] = self._patrol_wait.get(uid, patrol.get('pause', 1.2)) - dt
+            if self._patrol_wait[uid] > 1e-9:
+                continue
+            target = tuple(cells[(index + 1) % len(cells)])
+            if self.grid.can_step(npc['cell'], target) and target not in self.occupied():
+                self.world.npc_motions[uid] = Motion(
+                    npc['cell'], target, duration=patrol.get('duration', .48))
+            # Si Vera ocupa o reservó el destino, esperar sin saltar el paso.
+            self._patrol_wait[uid] = patrol.get('pause', 1.2)
 
     def _update_patrols(self, dt):
         for uid, patrol in self.patrols.items():

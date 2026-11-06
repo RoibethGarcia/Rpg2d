@@ -105,12 +105,22 @@ class WorldActor(GameObject):
 
 
 class WorldVillager(GameObject):
-    """Habitante estático sin barra de vida, PA, arma ni representación hostil."""
+    """Habitante civil sin barra de vida, PA, arma ni representación hostil."""
     def __init__(self, npc, image, anchor, foot):
         super().__init__(0, 0, image)
         self.npc = npc
+        self.anchor = anchor
         self.foot = foot
         self.rect.topleft = (round(foot[0] - anchor[0]), round(foot[1] - anchor[1]))
+
+    def sync(self, state, projection):
+        self.foot = projection.center(self.npc['cell'])
+        motion = state.world.npc_motions.get(self.npc['id'])
+        if motion is not None:
+            fraction = min(1, motion.elapsed / motion.duration)
+            start, end = projection.center(motion.start), projection.center(motion.end)
+            self.foot = tuple(a + (b - a) * fraction for a, b in zip(start, end))
+        self.rect.topleft = tuple(round(p - a) for p, a in zip(self.foot, self.anchor))
 
     def draw(self, surface):
         x,y = self.foot
@@ -411,6 +421,7 @@ class WorldRenderer:
                         anchor = tuple(round(v*factor) for v in self.villager_anchor)
                         self.villagers[obj['id']] = WorldVillager(obj, image, anchor, projection.center(obj['cell']))
                     actor = self.villagers[obj['id']]
+                    actor.sync(state, projection)
                     layers.append((actor.foot[1], 2, obj['id'], actor))
                 else:
                     layers.append((projection.center(tuple(obj['cell']))[1], 0, obj['id'], obj))
@@ -460,7 +471,7 @@ class WorldRenderer:
                     x, y = projection.screen(route['points'][0])
                     self.type.text(surface, route['id'].replace('escalera_', ''), (x, y), 18, TEXT)
         for npc in self.villagers.values():
-            if (state.interaction_distance(npc.npc['cell'], occupied_goal=True) in (1, 2)
+            if (state.npc_interaction_distance(npc.npc) in (1, 2)
                     and state.active_dialogue is None):
                 self.type.text(surface, 'E: Hablar', (npc.foot[0]-25, npc.rect.top-22), 18, AMBER)
         surface.set_clip(old_clip)
