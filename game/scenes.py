@@ -41,7 +41,9 @@ class MenuScene(Scene):
         super().__init__(game)
         self.type = Typography()
         self.buttons = [make_button(game, 460, 412, 360, 56, 'Comenzar', game.start_new_game, 30),
-                        make_button(game, 460, 486, 360, 50, 'Salir', game.stop, 26)]
+                        make_button(game, 460, 482, 360, 50, 'Opciones',
+                                    lambda: game.change_scene('options'), 26),
+                        make_button(game, 460, 546, 360, 50, 'Salir', game.stop, 26)]
 
     def handle_events(self, events):
         for event in events:
@@ -71,6 +73,56 @@ class MenuScene(Scene):
         self.type.text(surface, 'Combate por turnos · 6 PA', (545, 656), 22, MUTED)
         self.type.text(surface, 'Credencial y panel final', (865, 656), 22, MUTED)
         self.type.text(surface, 'Primera iteración · Arte industrial provisional y recursos acreditados', (80, 745), 20, MUTED)
+
+
+class OptionsScene(Scene):
+    """Ajustes de sesión; reutiliza botones y el mismo bucle del menú."""
+    def __init__(self, game):
+        super().__init__(game)
+        self.type = Typography()
+        self.buttons = [
+            make_button(game, 320, 310, 160, 48, 'Música −', lambda: self.change_music(-.1)),
+            make_button(game, 800, 310, 160, 48, 'Música +', lambda: self.change_music(.1)),
+            make_button(game, 320, 430, 160, 48, 'Efectos −', lambda: self.change_effects(-.1)),
+            make_button(game, 800, 430, 160, 48, 'Efectos +', lambda: self.change_effects(.1)),
+            make_button(game, 460, 545, 360, 50, 'Volver al menú', self.to_menu, 26),
+        ]
+
+    def change_music(self, delta):
+        self.game.set_music_volume(round(self.game.music_volume + delta, 2))
+
+    def change_effects(self, delta):
+        self.game.set_effects_volume(round(self.game.effects_volume + delta, 2))
+
+    def to_menu(self):
+        self.game.sound('back')
+        self.game.change_scene('menu')
+
+    def handle_events(self, events):
+        for event in events:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.to_menu()
+                return
+            for button in self.buttons:
+                button.handle_event(event)
+            if self.game.current_scene is not self:
+                return
+
+    def draw(self, surface):
+        surface.fill(BG)
+        pygame.draw.rect(surface, PANEL, (260, 180, 760, 450), border_radius=12)
+        pygame.draw.rect(surface, EDGE, (260, 180, 760, 450), 2, border_radius=12)
+        self.type.text(surface, 'OPCIONES DE AUDIO', (360, 210), 40, AMBER)
+        for label, volume, y, color in (('Música', self.game.music_volume, 265, WATER),
+                                        ('Efectos', self.game.effects_volume, 385, AMBER)):
+            self.type.text(surface, f'{label}: {round(volume * 100)} %', (500, y), 30)
+            bar(surface, pygame.Rect(500, y + 60, 280, 14), volume, 1, color)
+        self.type.text(surface, 'Efectos incluye botones y golpes de combate.', (360, 500), 22, MUTED)
+        for button in self.buttons:
+            button.draw(surface)
+        self.type.text(surface, '0 % silencia · 100 % conserva la mezcla original', (360, 655), 24, MUTED)
+        self.type.text(surface, 'Escape: volver · Los ajustes se mantienen hasta cerrar el juego.',
+                       (360, 692), 22, MUTED)
 
 
 class PlayScene(Scene):

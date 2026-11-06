@@ -6,7 +6,7 @@ import pygame
 from engine.asset_manager import AssetManager
 from engine.game_loop import GameLoop
 from game.model import GameState
-from game.scenes import MenuScene, PlayScene, VictoryScene, DefeatScene
+from game.scenes import MenuScene, OptionsScene, PlayScene, VictoryScene, DefeatScene
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -14,6 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 class LastValveGame(GameLoop):
     def __init__(self, audio_enabled=True):
         super().__init__(1280, 800, 'La última válvula', 60, audio_enabled=audio_enabled)
+        # Ganancias relativas: 100 % conserva el balance original de cada recurso.
+        self.music_volume = 1.0
+        self.effects_volume = 1.0
         self.assets = AssetManager()
         self.manifest = json.loads((ROOT / 'assets/manifest.json').read_text())
         for name, resource in self.manifest['images'].items():
@@ -23,15 +26,31 @@ class LastValveGame(GameLoop):
             self.ui_channel = pygame.mixer.Channel(0)
             for name, resource in self.manifest['sounds'].items():
                 self.assets.load_sound(name, ROOT / resource['path'])
-                self.assets.get_sound(name).set_volume(.35)
             for kind, resource in self.manifest['combat_sounds'].items():
                 self.assets.load_sound(f'combat_{kind}', ROOT / resource['path'])
-                self.assets.get_sound(f'combat_{kind}').set_volume(resource['volume'])
+            self.set_effects_volume(self.effects_volume)
         self.state = None
         self._ambience_map = None
-        self.scenes = {'menu': MenuScene(self), 'play': PlayScene(self),
+        self.scenes = {'menu': MenuScene(self), 'options': OptionsScene(self),
+                       'play': PlayScene(self),
                        'victory': VictoryScene(self), 'defeat': DefeatScene(self)}
         self.current_scene = self.scenes['menu']
+
+    def set_effects_volume(self, volume):
+        self.effects_volume = max(0.0, min(1.0, volume))
+        if not self.audio_enabled:
+            return
+        for name in self.manifest['sounds']:
+            self.assets.get_sound(name).set_volume(.35 * self.effects_volume)
+        for kind, resource in self.manifest['combat_sounds'].items():
+            self.assets.get_sound(f'combat_{kind}').set_volume(
+                resource['volume'] * self.effects_volume)
+
+    def set_music_volume(self, volume):
+        self.music_volume = max(0.0, min(1.0, volume))
+        if self.audio_enabled and self._ambience_map is not None:
+            resource = self.manifest['ambiences'][self._ambience_map]
+            pygame.mixer.music.set_volume(resource['volume'] * self.music_volume)
 
     def sound(self, name):
         if self.audio_enabled:
@@ -67,7 +86,7 @@ class LastValveGame(GameLoop):
         self._stop_ambience()
         if resource is not None:
             pygame.mixer.music.load(str(ROOT / resource['path']))
-            pygame.mixer.music.set_volume(resource['volume'])
+            pygame.mixer.music.set_volume(resource['volume'] * self.music_volume)
             pygame.mixer.music.play(loops=-1)
             self._ambience_map = target
 

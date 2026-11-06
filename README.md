@@ -64,6 +64,8 @@ Para ejecutarlo desde otro directorio, pasar rutas absolutas tanto al Python del
 | Entrada | Acción |
 |---|---|
 | «Comenzar» o Enter en el menú | Crear una partida nueva |
+| «Opciones» en el menú | Ajustar por separado música y efectos con −/+ en pasos de 10 % |
+| «Volver al menú» o Escape en opciones | Regresar al menú conservando el volumen elegido |
 | W / S | Fila −1 / +1 |
 | A / D | Columna −1 / +1 |
 | Clic en casilla | Seguir una ruta; en combate, solo el tramo permitido por los PA |
@@ -148,6 +150,13 @@ del puesto y de la planta permanece estática. El recurso se prepara una sola ve
 [Procedencia y límites de la cascada](assets/provenance/waterfall.md).
 
 ### Ambientación sonora por escenario
+
+En **menú → Opciones** puedes bajar o subir **Música** y **Efectos** por
+separado, entre 0 % (silencio) y 100 % (mezcla original). Efectos incluye los
+botones y todos los golpes de combate. Los porcentajes y barras reflejan el
+ajuste actual; se aplica sin reiniciar pistas ni volver a cargar sonidos.
+Los valores se mantienen al viajar, volver al menú o comenzar otra partida,
+pero **no se guardan al cerrar el juego**. No se añade música al menú.
 
 | Escenario | Pista |
 |---|---|
