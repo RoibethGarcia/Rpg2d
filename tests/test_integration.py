@@ -146,7 +146,8 @@ class InputSceneIntegrationTests(unittest.TestCase):
         self.key(pygame.K_e)
         self.game.update_game_logic(.02)
         self.assertEqual(state.mode, 'victory')
-        self.assertIs(self.game.current_scene, self.game.scenes['victory'])
+        self.assertIs(self.game.current_scene, self.game.scenes['ending'])
+        self.game.change_scene('victory')  # Pantalla de cierre -> créditos (cubierto en test_ending).
         self.click(self.game.scenes['victory'].return_rect.center)
         self.assertIs(self.game.current_scene, self.game.scenes['menu'])
         self.click((640, 440))

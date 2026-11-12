@@ -72,6 +72,37 @@ navegación, posiciones, AP, inventario, combate ni turnos. Las trayectorias se
 muestrean analíticamente desde tiempo acumulado y usan azar local con semilla
 fija al cargar: no consumen azar del gameplay ni dependen del número de frames.
 
+## Puesto, Planta y menú
+
+Los tres reutilizan `EnvironmentalEffects`; solo cambian los datos del bloque
+`ambient` de su JSON (`data/puesto.json`, `data/planta.json`, `data/menu.json`).
+Sin humo ni vapor propios (`emitters: []`, `particle_intensity: 0`); sí aves
+(`max_birds` 2 en los mapas, 3 en el menú) y agua.
+
+Cada zona de agua declara `kind`, `rect`, `polygon` y `opacity`:
+
+| `kind` | Qué dibuja | Uso típico |
+| --- | --- | --- |
+| `ripple` | Brillos que ondulan en horizontal (hoja procedural de 16 cuadros) | ríos, lagos, piletas |
+| `fall` | Estelas claras que bajan, con cabeza y cola suaves (16 cuadros, bucle sin salto) | caídas pintadas |
+
+- `river` está en coordenadas del **paisaje** y se dibuja detrás de la placa. Sin
+  `kind` se entiende `ripple` (así sigue funcionando el JSON de La Hondonada).
+  Una caída del paisaje (la represa de la Planta) es una entrada `river` con
+  `kind: "fall"`.
+- `flows` está en coordenadas de la **placa** y se dibuja encima de ella, debajo
+  de los actores. `kind` es obligatorio; un valor desconocido es un error al cargar.
+- `water_speed` y `enabled` de `settings` aplican igual que en La Hondonada.
+- Los polígonos se obtuvieron detectando el agua por color dentro de regiones
+  dibujadas a mano y revisando el resultado sobre la imagen. Si se cambia una
+  placa o un paisaje hay que rehacerlos: no se corrigen solos.
+
+El menú dibuja el paisaje de la planta con escala «cover», efectos, un velo
+oscuro y el texto con sombra corta. Al volver desde la partida el fundido y los
+efectos reinician; desde «Opciones» no. Su reloj solo avanza mientras el menú o
+las opciones son la escena activa. No hay humo en el menú: las torres de
+enfriamiento quedan fuera del encuadre.
+
 ## Recursos y fidelidad
 
 **No faltan recursos obligatorios para visualizar los efectos actuales.** Aves,

@@ -23,7 +23,7 @@ class PlantaTests(unittest.TestCase):
         self.assertTrue(state.grid.adjacency, 'Planta necesita navegación sobre su ilustración')
         self.assertEqual(set(state.enemies), {'guard3', 'guard4', 'guard5', 'boss'})
         self.assertEqual([(u.hp, u.damage) for u in state.enemies.values()],
-                         [(16, 3), (16, 3), (16, 3), (48, 4)])
+                         [(16, 3), (16, 3), (16, 3), (48, 3)])
         self.assertEqual({o['id'] for o in state.objects if o['kind'] == 'medkit'}, {'kit2', 'kit3'})
         occupied = {u.cell for u in state.enemies.values()}
         for obj in state.objects:

@@ -143,7 +143,7 @@ class FullPlaythroughTests(unittest.TestCase):
             self.assertTrue(state.attack(power=True))
             if state.mode == 'combat':
                 self.assertTrue(state.attack(power=True))
-        self.assertEqual(remaining_hp, [26, 14, 2])
+        self.assertEqual(remaining_hp, [27, 18, 9])  # Jefe con daño 3: antes [26, 14, 2].
         self.assertEqual(state.mode, 'exploration')
 
     def test_complete_real_map_three_guards_boss_credential_and_panel(self):
@@ -233,7 +233,7 @@ class FullPlaythroughTests(unittest.TestCase):
         self.enter_arena(state, rings['boss'], (17,3), 'boss')
         self.fight_final_boss(state, rings['boss'])
         self.assertTrue(state.credential)
-        self.assertEqual((state.player.hp, state.medkits), (2, 0))
+        self.assertEqual((state.player.hp, state.medkits), (9, 0))  # Antes 2 con daño 4 del jefe.
         self.assertTrue(all(enemy.hp == 0 for world in state.maps.values() for enemy in world.enemies.values()))
         self.assertEqual(state.maps['planta'].collected, {'kit2', 'kit3'})
         self.walk(state, (21,13))

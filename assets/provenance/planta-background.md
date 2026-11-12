@@ -40,3 +40,10 @@ El viewport panorámico recorta arriba/abajo del paisaje sin deformarlo; por ell
 la composición no es idéntica píxel a píxel a la referencia de proporción 4:3.
 El umbral es una máscara de presentación, no segmentación semántica: otra placa
 requiere revisar sus bordes. Capturas SDL dummy no sustituyen revisión nativa.
+
+## Uso adicional: fondo del menú
+
+También es el fondo del menú y de «Opciones» (`game/menu_backdrop.py`): escala
+«cover» a 1280×800, velo oscuro y efectos procedurales dibujados encima en
+tiempo de ejecución. El archivo no se modifica; su redistribución sigue pendiente
+como la de este recurso. Las zonas de agua animadas están en `data/menu.json`.

@@ -88,7 +88,7 @@ class BackgroundTests(unittest.TestCase):
 
     def test_background_is_fixed_across_zoom_camera_and_time_without_per_frame_loading(self):
         # Aislar la capa de fondo: el mundo transparente no debe taparla al ampliar.
-        state = SimpleNamespace(map_id=self.MAP_ID, world=SimpleNamespace(exits={}))
+        state = SimpleNamespace(map_id=self.MAP_ID, world=SimpleNamespace(exits={}), objects=[])
         def clear_world(surface, state, hover):
             surface.fill((0, 0, 0, 0))
             return [], 0
