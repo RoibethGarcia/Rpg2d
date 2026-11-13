@@ -61,7 +61,9 @@ class UITests(unittest.TestCase):
             self.game.state.mode = mode
             self.game.current_scene = self.game.scenes['play']
             self.game.update_game_logic(.02)
-            self.assertIs(self.game.current_scene, self.game.scenes[mode])
+            # La victoria pasa primero por la pantalla de cierre y luego por los créditos.
+            expected = 'ending' if mode == 'victory' else mode
+            self.assertIs(self.game.current_scene, self.game.scenes[expected])
     def test_keyboard_and_click_use_domain_commands(self):
         self.game.start_new_game()
         self.assertIsNotNone(self.game.state)
@@ -73,6 +75,7 @@ class UITests(unittest.TestCase):
         self.assertIn('human_front', self.game.assets.images)
         self.assertIn('human_rear', self.game.assets.images)
         self.assertIn('pipes', self.game.assets.images)
+        self.game.update_game_logic(1)  # El menú entra con fundido: el 1.er frame es negro.
         self.game.draw_game_elements()
         self.assertNotEqual(self.game.screen.get_at((10, 10))[:3], (0, 0, 0))
     def test_menu_and_play_draw_without_reloading_assets(self):

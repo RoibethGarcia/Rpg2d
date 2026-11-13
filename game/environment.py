@@ -172,6 +172,7 @@ class LayeredEnvironmentArt:
             speed = self.effects.config.water_speed if self.effects is not None else 1
             self.waterfall.blit(surface, elapsed * speed)
         if self.effects is not None:
+            self.effects.draw_flows(surface)
             self.effects.draw_smoke(surface)
 
     def blit_layer(self, surface, layer):

@@ -1,9 +1,12 @@
 """Escenas concretas; input de UI nunca atraviesa hasta el mundo."""
+import math
 import pygame
 from engine.ui import Scene, Button
 from game.render import (Typography, WorldRenderer, WORLD_RECT, BG, PANEL,
                          EDGE, TEXT, MUTED, WATER, AMBER, RED, bar)
 from game.dialogue import DialogueView
+from game.guidance import combat_hint, end_turn_advised, medkit_status, objective
+from game.menu_nav import MenuSelection, reveal
 from game.model import ActionResult
 
 
@@ -25,54 +28,155 @@ def make_button(game, x, y, width, height, text, callback, size=24):
     return button
 
 
-def emblem(surface, center, radius=90, water=False):
+def emblem(surface, center, radius=90, water=False, angle=0.0):
     x, y = center
     color = WATER if water else AMBER
     pygame.draw.circle(surface, (35, 47, 52), center, radius + 9)
     pygame.draw.circle(surface, color, center, radius, 7)
     pygame.draw.circle(surface, color, center, radius // 3, 7)
-    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+    for turn in range(4):  # Rayos del volante; angle=0 es la figura original.
+        a = math.radians(angle + 90 * turn)
+        dx, dy = math.cos(a), math.sin(a)
         pygame.draw.line(surface, color, (x + dx * radius // 3, y + dy * radius // 3),
                          (x + dx * radius, y + dy * radius), 10)
 
 
+def glass_button(surface, layer, topleft, text, font, selected, primary, amount=1.0):
+    """Botón de cristal oscuro con borde ámbar al seleccionarlo; el primario destaca."""
+    rect = layer.get_rect()
+    layer.fill((0, 0, 0, 0))
+    if primary and selected:
+        fill, edge, ink = (*AMBER, 240), (255, 226, 160), (22, 26, 28)
+    elif primary:
+        fill, edge, ink = (44, 36, 24, 215), AMBER, AMBER
+    elif selected:
+        fill, edge, ink = (58, 78, 84, 235), AMBER, TEXT
+    else:
+        fill, edge, ink = (22, 31, 36, 190), EDGE, TEXT
+    pygame.draw.rect(layer, fill, rect, border_radius=10)
+    pygame.draw.rect(layer, edge, rect, 2, border_radius=10)
+    if selected and not primary:
+        pygame.draw.rect(layer, AMBER, (0, 8, 5, rect.height - 16), border_radius=3)
+    image = font.render(text, True, ink)
+    layer.blit(image, image.get_rect(center=rect.center))
+    layer.set_alpha(round(255 * amount))
+    surface.blit(layer, (topleft[0], topleft[1] + round((1 - amount) * 12)))
+
+
 class MenuScene(Scene):
+    """Menú sobre el fondo vivo: entrada escalonada, teclado y emblema que gira."""
+    FADE_SECONDS = .9
+    SPIN_DEGREES_PER_SECOND = 14
+    REVEALS = {'emblem': (.15, .5), 'title': (.35, .5), 'subtitle': (.65, .5), 'buttons': (.85, .45)}
+    footer_lines = ('Taller de Videojuegos 2D · 2026',)
+
     def __init__(self, game):
         super().__init__(game)
         self.type = Typography()
+        self.backdrop = game.backdrop
+        self.fade = 0.0
+        self.elapsed = 0.0
+        self.angle = 0.0
+        self.selection = MenuSelection(4)
+        self.veil = pygame.Surface((1280, 800))
         self.buttons = [make_button(game, 460, 412, 360, 56, 'Comenzar', game.start_new_game, 30),
-                        make_button(game, 460, 482, 360, 50, 'Opciones',
+                        make_button(game, 460, 480, 360, 46, 'Cómo jugar',
+                                    lambda: game.change_scene('howto'), 26),
+                        make_button(game, 460, 532, 360, 46, 'Opciones',
                                     lambda: game.change_scene('options'), 26),
-                        make_button(game, 460, 546, 360, 50, 'Salir', game.stop, 26)]
+                        make_button(game, 460, 584, 360, 46, 'Salir', game.stop, 26)]
+        self.emblem_layer = pygame.Surface((160, 160), pygame.SRCALPHA)
+        self.entry_layers = [pygame.Surface(b.rect.size, pygame.SRCALPHA) for b in self.buttons]
+
+    def reveal_of(self, name, delay=0.0):
+        start, duration = self.REVEALS[name]
+        return reveal(self.elapsed, start + delay, duration)
+
+    def on_enter(self):
+        """Al volver desde la partida: fondo, fundido, entrada y selección desde el principio."""
+        self.fade = 0.0
+        self.elapsed = 0.0
+        self.angle = 0.0
+        self.selection.set(0)
+        self.backdrop.reset()
+
+    def update(self, dt):
+        self.fade = min(1.0, self.fade + dt / self.FADE_SECONDS)
+        self.elapsed += dt
+        self.angle = (self.angle + self.SPIN_DEGREES_PER_SECOND * dt) % 360
+        self.backdrop.update(dt)
+
+    def activate(self):
+        button = self.buttons[self.selection.index]
+        if button.click_sound is not None:
+            button.click_sound.play()
+        button.callback()
 
     def handle_events(self, events):
         for event in events:
+            if event.type == pygame.MOUSEMOTION or (event.type == pygame.MOUSEBUTTONDOWN
+                                                    and event.button == 1):
+                for index, button in enumerate(self.buttons):
+                    if button.rect.collidepoint(event.pos):
+                        self.selection.set(index)
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_DOWN, pygame.K_s):
+                    self.selection.move(1)
+                elif event.key in (pygame.K_UP, pygame.K_w):
+                    self.selection.move(-1)
+                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+                    self.activate()
+                    return
             for button in self.buttons:
                 button.handle_event(event)
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                self.game.start_new_game()
+            if self.game.current_scene is not self:
+                return
+
+    def shadowed(self, surface, text, size, color, alpha=255, dy=0, **anchor):
+        """Texto con sombra corta: se lee sobre cualquier zona del paisaje."""
+        if alpha <= 0:
+            return
+        font = self.type.fonts[size]
+        image, shade = font.render(text, True, color), font.render(text, True, (4, 7, 10))
+        image.set_alpha(alpha)
+        shade.set_alpha(alpha)
+        rect = image.get_rect(**anchor).move(0, dy)
+        surface.blit(shade, rect.move(2, 2))
+        surface.blit(image, rect)
+
+    def draw_entry(self, surface, index, amount):
+        button = self.buttons[index]
+        glass_button(surface, self.entry_layers[index], button.rect.topleft, button.text,
+                     button.font, self.selection.index == index, index == 0, amount)
 
     def draw(self, surface):
-        surface.fill(BG)
-        for x in range(0, 1280, 80):
-            pygame.draw.line(surface, (25, 34, 39), (x, 0), (x - 180, 800), 1)
+        self.backdrop.draw(surface)
         pygame.draw.line(surface, AMBER, (80, 84), (1200, 84), 2)
-        self.type.text(surface, 'LA HONDONADA / PLANTA DE DISTRIBUCIÓN', (80, 49), 22, MUTED)
-        emblem(surface, (640, 205), 65)
-        title = self.type.fonts[64].render('LA ÚLTIMA VÁLVULA', True, TEXT)
-        surface.blit(title, title.get_rect(center=(640, 325)))
-        subtitle = 'El agua no pertenece a La Custodia. Devuélvela a La Hondonada.'
-        line = self.type.fonts[26].render(subtitle, True, MUTED)
-        surface.blit(line, line.get_rect(center=(640, 373)))
-        for button in self.buttons:
-            button.draw(surface)
-        self.type.text(surface, 'EXPLORA', (270, 618), 26, WATER)
-        self.type.text(surface, 'DECIDE', (590, 618), 26, AMBER)
-        self.type.text(surface, 'RESTAURA', (910, 618), 26, WATER)
-        self.type.text(surface, 'WASD o clic · Rejilla isométrica', (225, 656), 22, MUTED)
-        self.type.text(surface, 'Combate por turnos · 6 PA', (545, 656), 22, MUTED)
-        self.type.text(surface, 'Credencial y panel final', (865, 656), 22, MUTED)
-        self.type.text(surface, 'Primera iteración · Arte industrial provisional y recursos acreditados', (80, 745), 20, MUTED)
+        self.shadowed(surface, 'LA HONDONADA / PLANTA DE DISTRIBUCIÓN', 22, MUTED, topleft=(80, 49))
+        shown = self.reveal_of('emblem')
+        if shown > 0:
+            self.emblem_layer.fill((0, 0, 0, 0))
+            emblem(self.emblem_layer, (80, 80), 60, angle=self.angle)
+            self.emblem_layer.set_alpha(round(255 * shown))
+            surface.blit(self.emblem_layer, (560, 115 + round((1 - shown) * 12)))
+        shown = self.reveal_of('title')
+        self.shadowed(surface, 'LA ÚLTIMA VÁLVULA', 80, TEXT, round(255 * shown),
+                      round((1 - shown) * 14), center=(640, 322))
+        shown = self.reveal_of('subtitle')
+        self.shadowed(surface, 'El agua no pertenece a La Custodia. Devuélvela a La Hondonada.',
+                      26, TEXT, round(255 * shown), round((1 - shown) * 10), center=(640, 373))
+        for index in range(len(self.buttons)):
+            amount = self.reveal_of('buttons', .08 * index)
+            if amount > 0:
+                self.draw_entry(surface, index, amount)
+        self.shadowed(surface, 'Flechas o W/S: elegir   ·   Enter: confirmar', 20, MUTED,
+                      round(255 * self.reveal_of('buttons', .3)), center=(640, 664))
+        for index, line in enumerate(self.footer_lines):
+            self.shadowed(surface, line, 20, MUTED, topleft=(80, 745 + 24 * index))
+        if self.fade < 1:
+            eased = self.fade * self.fade * (3 - 2 * self.fade)
+            self.veil.set_alpha(round(255 * (1 - eased)))
+            surface.blit(self.veil, (0, 0))
 
 
 class OptionsScene(Scene):
@@ -80,6 +184,10 @@ class OptionsScene(Scene):
     def __init__(self, game):
         super().__init__(game)
         self.type = Typography()
+        self.backdrop = game.backdrop
+        self.panel = pygame.Surface((760, 540), pygame.SRCALPHA)
+        pygame.draw.rect(self.panel, (*PANEL, 222), self.panel.get_rect(), border_radius=12)
+        pygame.draw.rect(self.panel, EDGE, self.panel.get_rect(), 2, border_radius=12)
         self.buttons = [
             make_button(game, 320, 310, 160, 48, 'Música −', lambda: self.change_music(-.1)),
             make_button(game, 800, 310, 160, 48, 'Música +', lambda: self.change_music(.1)),
@@ -108,10 +216,12 @@ class OptionsScene(Scene):
             if self.game.current_scene is not self:
                 return
 
+    def update(self, dt):
+        self.backdrop.update(dt)
+
     def draw(self, surface):
-        surface.fill(BG)
-        pygame.draw.rect(surface, PANEL, (260, 180, 760, 450), border_radius=12)
-        pygame.draw.rect(surface, EDGE, (260, 180, 760, 450), 2, border_radius=12)
+        self.backdrop.draw(surface)
+        surface.blit(self.panel, (260, 180))
         self.type.text(surface, 'OPCIONES DE AUDIO', (360, 210), 40, AMBER)
         for label, volume, y, color in (('Música', self.game.music_volume, 265, WATER),
                                         ('Efectos', self.game.effects_volume, 385, AMBER)):
@@ -137,7 +247,7 @@ class PlayScene(Scene):
         self.buttons = [
             make_button(game, 28, 693, 166, 46, 'Llave · 2 PA / 4', lambda: self.command('attack')),
             make_button(game, 206, 693, 178, 46, 'Potente · 3 PA / 7', lambda: self.command('attack', True)),
-            make_button(game, 396, 693, 190, 46, 'Botiquín · 2 PA / +8', lambda: self.command('heal')),
+            make_button(game, 396, 693, 190, 46, 'Botiquín · 2 PA / +8', lambda: self.command('heal'), 22),
             make_button(game, 598, 693, 180, 46, 'Espacio · Fin turno', lambda: self.command('end_turn')),
             make_button(game, 790, 693, 190, 46, 'E · Interactuar', lambda: self.command('interact')),
             make_button(game, 1034, 734, 214, 42, 'Volver al menú', self.to_menu),
@@ -177,8 +287,13 @@ class PlayScene(Scene):
 
     def _play_attack_sounds(self):
         # No usar last_attacks: pierde golpes de un mismo tick y los letales.
-        for action in self.game.state.drain_attack_events():
+        state = self.game.state
+        for action in state.drain_attack_events():
             self.game.combat_sound(action.kind)
+            if action.damage:  # Número flotante: solo presentación del hecho ya aplicado.
+                color = AMBER if action.attacker_id == state.player.id else RED
+                self.renderer.add_floater(action.target_cell, f'-{action.damage}', color,
+                                          action.occurred_at)
 
     def command(self, name, *args):
         self._sync_context()
@@ -188,7 +303,11 @@ class PlayScene(Scene):
             state.message = 'Espera a que termine la animación del ataque.'
             result = ActionResult(False, state.message)
         else:
+            hp_before = state.player.hp
             result = getattr(state, name)(*args)
+            if name == 'heal' and result.ok:
+                self.renderer.add_floater(state.player.cell, f'+{state.player.hp - hp_before}',
+                                          WATER, state.elapsed)
         self._play_attack_sounds()
         self._sync_context()
         if name != 'attack' or not result.ok:
@@ -229,9 +348,13 @@ class PlayScene(Scene):
                 if not state.grid.in_bounds(cell):
                     continue
                 self.hover_cell = cell
-                if state.mode == 'combat' and any(u.hp > 0 and u.cell == cell for u in state.enemies.values()):
-                    state.message = 'Enemigo seleccionado. Usa Llave o Potente desde una casilla vecina.'
-                    self.game.sound('click')
+                target = next((u for u in state.enemies.values() if u.hp > 0 and u.cell == cell), None)
+                if state.mode == 'combat' and target is not None:
+                    if target.id == state.active_enemy_id and state.grid.can_step(state.player.cell, cell):
+                        self.command('attack')  # Clic en el rival vecino = Llave (ataque básico).
+                    else:
+                        state.message = 'Está lejos: acércate a una casilla vecina (1 PA por paso) y haz clic de nuevo.'
+                        self.game.sound('click')
                 else:
                     self.command('set_destination', cell)
             elif event.type == pygame.KEYDOWN:
@@ -286,8 +409,7 @@ class PlayScene(Scene):
         t.text(surface, 'Credencial: ' + ('SÍ' if state.credential else 'NO'), (1034, 252), 24, WATER if state.credential else AMBER)
         pygame.draw.line(surface, EDGE, (1034, 290), (1248, 290))
         t.text(surface, 'OBJETIVO', (1034, 312), 24, AMBER)
-        objective = 'Activa con E la válvula de la sala de control.' if state.credential else 'Cruza la planta y recupera la credencial del jefe.'
-        t.wrapped(surface, objective, (1034, 347), 214, 24)
+        t.wrapped(surface, objective(state), (1034, 347), 214, 24)
         enemy = state.enemies.get(state.active_enemy_id)
         hovered = next((u for u in state.enemies.values() if u.hp > 0 and u.cell == self.hover_cell), None)
         enemy = hovered or enemy
@@ -296,7 +418,7 @@ class PlayScene(Scene):
             t.wrapped(surface, enemy.name, (1034, 464), 210, 24)
             t.text(surface, f'Vida {enemy.hp} / {enemy.max_hp}', (1034, 502), 24)
             bar(surface, pygame.Rect(1034, 534, 214, 9), enemy.hp, enemy.max_hp, RED)
-        else:
+        elif state.map_id == 'hondonada':
             t.wrapped(surface, 'La Hondonada lleva días sin agua. Abre el paso de mantenimiento y busca suministros.', (1034, 431), 214, 22, MUTED)
         t.text(surface, 'WASD / clic: mover', (1034, 588), 22, MUTED)
         t.text(surface, 'Escape: cancelar ruta', (1034, 616), 22, MUTED)
@@ -304,7 +426,8 @@ class PlayScene(Scene):
         t.text(surface, 'Espacio: fin de turno', (1034, 672), 22, MUTED)
         pygame.draw.rect(surface, PANEL, (0, 640, 1008, 160))
         pygame.draw.line(surface, EDGE, (0, 640), (1008, 640), 2)
-        route = 'Selecciona una casilla · Verde: alcance disponible · Ámbar: resto'
+        route = (combat_hint(state) if state.mode == 'combat'
+                 else 'Selecciona una casilla · Verde: alcance disponible · Ámbar: resto')
         if path:
             if state.mode == 'combat':
                 route = f'Ruta: {len(path)} pasos · costo {reachable} PA · quedan {state.player.ap - reachable} PA · ámbar: descartado'
@@ -314,6 +437,14 @@ class PlayScene(Scene):
         for button in self.buttons:
             combat_only = button in self.buttons[:4]
             button.color = (49, 65, 71) if not combat_only or state.mode == 'combat' else (34, 43, 47)
+            button.hover_color = (69, 94, 98)
+            if button is self.buttons[3] and end_turn_advised(state):
+                # Ámbar apagado: lo único útil que queda es terminar el turno.
+                button.color, button.hover_color = (126, 92, 40), (160, 118, 52)
+            if button is self.buttons[2]:
+                button.text, usable = medkit_status(state)
+                if state.mode == 'combat' and not usable:
+                    button.color = (34, 43, 47)
             button.draw(surface)
         if state.active_dialogue is None:
             t.wrapped(surface, state.message or 'Busca suministros y avanza hacia la sala de control.', (28, 755), 952, 22, TEXT)

@@ -219,7 +219,7 @@ class CombatSoundMixerTests(unittest.TestCase):
         self.game.combat_sound('power')
         self.game.state.mode = 'victory'
         self.game.update_game_logic(0)
-        self.assertIs(self.game.current_scene, self.game.scenes['victory'])
+        self.assertIs(self.game.current_scene, self.game.scenes['ending'])
         self.assertEqual(self.game.assets.get_sound('combat_power').get_num_channels(), 0)
 
     def test_domain_travel_discards_pending_lethal_event_and_stops_old_tails(self):

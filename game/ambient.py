@@ -144,6 +144,41 @@ def _ripple_sheet():
     return sheet
 
 
+def _fall_sheet():
+    """Hoja RGBA cíclica de estelas verticales claras, SIN fondo opaco.
+
+    Cada estela baja un número entero de vueltas por ciclo (1 o 2), de modo que
+    el último cuadro enlaza con el primero sin salto.
+    """
+    width, height, frames = 48, 160, 16
+    sheet = pygame.Surface((width * frames, height), pygame.SRCALPHA)
+    rng = Random(6021)
+    streaks = [(rng.uniform(3, width - 3), rng.uniform(0, height), rng.choice((1, 1, 2)),
+                rng.uniform(14, 34), rng.uniform(.6, 1)) for _ in range(11)]
+    for frame in range(frames):
+        image = sheet.subsurface((width * frame, 0, width, height))
+        phase = frame / frames
+        for index, (x, y0, speed, length, strength) in enumerate(streaks):
+            y = (y0 + phase * height * speed) % height
+            x += 1.2 * sin(phase * 2 * pi * speed + index)
+            length = round(length * 1.3)
+            for step in range(length):
+                # Cabeza y cola se desvanecen: se lee como agua, no como un palito.
+                taper = sin(pi * (step + .5) / length)
+                color = (222, 244, 248, round(150 * strength * taper))
+                # Copia envuelta: la cola que sale por abajo entra por arriba.
+                for offset in (-height, 0):
+                    pygame.draw.line(image, color, (x, y + offset + step),
+                                     (x, y + offset + step + 1), 2)
+    return sheet
+
+
+_FLOW_RECORDS = {
+    'ripple': {'grid': [16, 1], 'crop': [0, 0, 128, 32], 'frame_seconds': .125},
+    'fall': {'grid': [16, 1], 'crop': [0, 0, 48, 160], 'frame_seconds': .06},
+}
+
+
 class WaterfallAnimation:
     """Superposición local cacheada: nunca avanza el reloj ni modifica el mundo.
 
@@ -213,10 +248,19 @@ class EnvironmentalEffects:
         self.bird_count = grid[0] * grid[1]
         self.bird_frames = _prepare_birds(bird_sheet if bird_sheet is not None else _bird_sheet(), grid)
         self.smoke_frames = _smoke_frames(projection.scale)
-        sheet = _ripple_sheet()
-        record = {'grid': [16, 1], 'crop': [0, 0, 128, 32], 'frame_seconds': .125}
-        self.river = tuple(WaterfallAnimation(sheet, record, placement, background_projection)
+        sheets = {'ripple': _ripple_sheet(), 'fall': _fall_sheet()}
+
+        def zone(placement, space, default_kind=None):
+            kind = placement.get('kind', default_kind)
+            if kind not in _FLOW_RECORDS:
+                raise ValueError(f'Tipo de zona de agua inválido: {kind!r}')
+            return WaterfallAnimation(sheets[kind], _FLOW_RECORDS[kind], placement, space)
+
+        # `river`: espacio del paisaje, detrás de la placa; sin `kind` es un reflejo.
+        self.river = tuple(zone(placement, background_projection, 'ripple')
                            for placement in data['river'])
+        # `flows`: espacio de la placa, encima de ella; `kind` es obligatorio.
+        self.flows = tuple(zone(placement, projection) for placement in data.get('flows', ()))
         # Carriles laterales, pares próximos para una pequeña bandada. Ni la
         # cámara del jugador ni el zoom alteran el paisaje o sus aves.
         self._tracks = ((-.015, .23, .20, .015, 27.3, 8.1, 6.2, 0),
@@ -304,6 +348,16 @@ class EnvironmentalEffects:
         for x, y, variant, frame in self.bird_poses:
             image = self.bird_frames[variant][frame]
             surface.blit(image, (x-image.get_width()//2, y-image.get_height()//2))
+        surface.set_clip(clip)
+
+    def draw_flows(self, surface):
+        """Caídas y piletas pintadas en la placa: se dibuja sobre ella, bajo los actores."""
+        if not self.config.enabled:
+            return
+        clip = surface.get_clip()
+        surface.set_clip(clip.clip(self.viewport))
+        for water in self.flows:
+            water.blit(surface, self.time * self.config.water_speed)
         surface.set_clip(clip)
 
     def draw_smoke(self, surface):

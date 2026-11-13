@@ -124,6 +124,8 @@ class CreditsTests(unittest.TestCase):
         self.game.handle_specific_events(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_e))
         self.game.update_game_logic(0)
         self.assertEqual(state.mode, 'victory')
+        self.assertIs(self.game.current_scene, self.game.scenes['ending'])
+        self.game.change_scene('victory')
         scene = self.game.current_scene
         self.assertIs(scene, self.game.scenes['victory'])
         self.assertTrue(hasattr(scene, 'image'), 'La victoria todavía no muestra los créditos')

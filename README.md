@@ -145,9 +145,37 @@ solo como referencia visual, para no duplicar personajes y etiquetas pintados.
 La cascada del extremo sudeste del pueblo tiene una superposición ambiental de
 **ocho cuadros a 10 FPS**, integrada sobre el agua pintada y detrás de los
 primeros planos. Respeta el zoom, se pausa durante los diálogos y vuelve al primer
-cuadro al iniciar una partida nueva. No cambia navegación, PA ni turnos; el agua
-del puesto y de la planta permanece estática. El recurso se prepara una sola vez.
+cuadro al iniciar una partida nueva. No cambia navegación, PA ni turnos. El
+recurso se prepara una sola vez.
 [Procedencia y límites de la cascada](assets/provenance/waterfall.md).
+
+### Agua viva en puesto y planta, y fondo del menú
+
+El **Puesto** y la **Planta** animan las caídas y piletas pintadas en su placa
+(estelas de agua y brillos generados por código, sin recursos nuevos), el agua
+visible del paisaje y unas pocas aves; la Planta añade las caídas de la represa.
+El **menú** y «Opciones» usan el paisaje de la planta como fondo vivo (agua,
+caídas, aves), un velo oscuro para que el texto se lea y un fundido de entrada.
+Todo es decorativo: no toca colisiones, rutas, PA ni turnos, y se ajusta desde
+`data/*.json`. [Detalle y parámetros](docs/EFECTOS_AMBIENTALES.md). Las capturas
+SDL dummy comprueban que el agua se mueve donde debe, no cómo se ve en pantalla.
+
+### Menú, teclado y «Cómo jugar»
+
+El menú se navega con **flechas o W/S + Enter** (o con el mouse): la entrada
+seleccionada se resalta, «Comenzar» destaca, el emblema de la válvula gira
+lento y los elementos aparecen en secuencia sin bloquear el input.
+«Cómo jugar» (`game/howto.py`) resume controles, PA, Llave/Potente, botiquín,
+el truco de retirada contra el jefe y el objetivo de cada nivel; sus números
+salen de `game/config.py`, así que no se desactualizan. La lógica de selección
+y de aparición es pura (`game/menu_nav.py`) y está cubierta por
+`tests/test_menu_polish.py`.
+
+Al ganar, el flujo es **cierre → créditos → menú**: `game/ending.py` muestra
+«Fin del primer nivel» (resumen de vida, botiquines y credencial, y el aviso de
+que es la prueba del juego y vienen más niveles) con la misma estética del menú;
+la primera pulsación salta la animación y recién la siguiente navega.
+Cubierto por `tests/test_ending.py`.
 
 ### Ambientación sonora por escenario
 

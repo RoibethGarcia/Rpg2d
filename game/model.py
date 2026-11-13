@@ -42,6 +42,7 @@ class AttackAction:
     target_cell: Cell
     occurred_at: float
     kind: str = 'basic'
+    damage: int = 0
 
 @dataclass(frozen=True)
 class MapExit:
@@ -122,8 +123,8 @@ class GameState:
         """Reloj continuo en segundos, incluida la fracción aún no simulada."""
         return self._simulation_time + self._clock
 
-    def _record_attack(self, attacker, target, occurred_at, kind):
-        action = AttackAction(attacker.id, target.cell, occurred_at, kind)
+    def _record_attack(self, attacker, target, occurred_at, kind, damage=0):
+        action = AttackAction(attacker.id, target.cell, occurred_at, kind, damage)
         self.last_attacks[attacker.id] = action
         self._attack_events.append(action)
 
@@ -306,7 +307,7 @@ class GameState:
         self.player.ap -= cost
         damage = POWER_DAMAGE if power else BASIC_DAMAGE
         enemy.hp = max(0, enemy.hp - damage)
-        self._record_attack(self.player, enemy, self.elapsed, 'power' if power else 'basic')
+        self._record_attack(self.player, enemy, self.elapsed, 'power' if power else 'basic', damage)
         if enemy.hp == 0:
             self.last_attacks.clear()
             self.mode = 'exploration'
@@ -315,7 +316,7 @@ class GameState:
             self.motions.clear()
             if enemy.boss:
                 self.credential = True
-                return self._result(True, 'Jefe derrotado. Credencial recuperada: activa el panel con E.')
+                return self._result(True, 'Jefe derrotado. Credencial recuperada: activa la válvula con E.')
             return self._result(True, f'{enemy.name} derrotado. Conservas vida y recursos.')
         message = f'Golpe de Vera: {damage} de daño'
         if self._end_turn_if_exhausted():
@@ -366,7 +367,7 @@ class GameState:
                 enemy.ap -= ENEMY_ATTACK_COST
                 self.player.hp = max(0, self.player.hp - enemy.damage)
                 self._record_attack(enemy, self.player, self._simulation_time,
-                                    'boss' if enemy.boss else 'guard')
+                                    'boss' if enemy.boss else 'guard', enemy.damage)
                 self.message = f'{enemy.name}: {enemy.damage} de daño'
                 if self.player.hp == 0:
                     self.last_attacks.clear()
