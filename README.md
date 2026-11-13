@@ -65,7 +65,7 @@ Para ejecutarlo desde otro directorio, pasar rutas absolutas tanto al Python del
 |---|---|
 | «Comenzar» o Enter en el menú | Crear una partida nueva |
 | «Opciones» en el menú | Ajustar por separado música y efectos con −/+ en pasos de 10 % |
-| «Volver al menú» o Escape en opciones | Regresar al menú conservando el volumen elegido |
+| Botón de volver o Escape en opciones | Regresar al menú o a la pausa, según desde dónde se abrieron; conservar el volumen elegido |
 | W / S | Fila −1 / +1 |
 | A / D | Columna −1 / +1 |
 | Clic en casilla | Seguir una ruta; en combate, solo el tramo permitido por los PA |
@@ -75,7 +75,8 @@ Para ejecutarlo desde otro directorio, pasar rutas absolutas tanto al Python del
 | E / Enter / Espacio o clic en «Continuar» durante diálogo | Avanzar página; la última página cierra la ventana |
 | Escape durante diálogo | Cerrar la conversación, sin mover a Vera |
 | Espacio o «Fin turno» | Ceder voluntariamente el turno; al agotar los PA termina automáticamente |
-| Escape en partida | Cancelar pasos futuros; termina el paso en curso |
+| Escape en partida | Pausar sin perder rutas, pasos en curso ni progreso; Escape de nuevo o «Continuar» reanuda |
+| «Opciones» durante la pausa | Ajustar música y efectos mientras la partida permanece congelada |
 | F3 en cualquier escenario | Alternar diagnóstico de rutas y escaleras; apagado al iniciar |
 | Botones «Zoom +» / «Zoom −» sobre el mapa | Acercar/alejar entre 100 %, 125 % y 150 % |
 | «Volver al menú» | Regresar al menú; «Comenzar» crea estado limpio |
@@ -179,12 +180,19 @@ Cubierto por `tests/test_ending.py`.
 
 ### Ambientación sonora por escenario
 
-En **menú → Opciones** puedes bajar o subir **Música** y **Efectos** por
+En **menú → Opciones** o **partida → Escape → Opciones** puedes bajar o subir **Música** y **Efectos** por
 separado, entre 0 % (silencio) y 100 % (mezcla original). Efectos incluye los
 botones y todos los golpes de combate. Los porcentajes y barras reflejan el
 ajuste actual; se aplica sin reiniciar pistas ni volver a cargar sonidos.
 Los valores se mantienen al viajar, volver al menú o comenzar otra partida,
 pero **no se guardan al cerrar el juego**. No se añade música al menú.
+
+La pausa congela movimientos, patrullas, turnos y animaciones. Opciones vuelve a
+la pausa, no al menú principal; «Continuar» o Escape reanuda la misma partida.
+La música sigue sonando sin reiniciarse para escuchar el ajuste de volumen;
+las colas de golpes ya emitidos pueden terminar. Durante un diálogo, Escape
+conserva su función de cerrar la conversación; otra pulsación abre la pausa.
+Cubierto por `tests/test_pause.py` (simulación y audio con SDL dummy).
 
 | Escenario | Pista |
 |---|---|

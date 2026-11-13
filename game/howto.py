@@ -8,7 +8,7 @@ from game.scenes import make_button
 
 HOW_TO_PLAY = (
     ('Moverte', 'WASD o clic para caminar por la rejilla. E recoge objetos, activa '
-                'mecanismos y usa salidas. Escape cancela la ruta.'),
+                'mecanismos y usa salidas. Escape pausa el juego y permite ajustar el audio.'),
     ('Combate por turnos', f'El combate empieza cuando un enemigo y Vera se tocan. Cada turno '
                            f'tienes {TURN_AP} PA: un paso cuesta 1 PA y solo se ataca desde una '
                            f'casilla vecina. El turno termina al quedarte sin PA o con Espacio.'),

@@ -185,6 +185,7 @@ class OptionsScene(Scene):
         super().__init__(game)
         self.type = Typography()
         self.backdrop = game.backdrop
+        self.return_scene = 'menu'
         self.panel = pygame.Surface((760, 540), pygame.SRCALPHA)
         pygame.draw.rect(self.panel, (*PANEL, 222), self.panel.get_rect(), border_radius=12)
         pygame.draw.rect(self.panel, EDGE, self.panel.get_rect(), 2, border_radius=12)
@@ -193,8 +194,12 @@ class OptionsScene(Scene):
             make_button(game, 800, 310, 160, 48, 'Música +', lambda: self.change_music(.1)),
             make_button(game, 320, 430, 160, 48, 'Efectos −', lambda: self.change_effects(-.1)),
             make_button(game, 800, 430, 160, 48, 'Efectos +', lambda: self.change_effects(.1)),
-            make_button(game, 460, 545, 360, 50, 'Volver al menú', self.to_menu, 26),
+            make_button(game, 460, 545, 360, 50, 'Volver al menú', self.go_back, 26),
         ]
+
+    def on_enter(self, return_scene):
+        self.return_scene = return_scene
+        self.buttons[-1].text = 'Volver a la pausa' if return_scene == 'pause' else 'Volver al menú'
 
     def change_music(self, delta):
         self.game.set_music_volume(round(self.game.music_volume + delta, 2))
@@ -202,14 +207,15 @@ class OptionsScene(Scene):
     def change_effects(self, delta):
         self.game.set_effects_volume(round(self.game.effects_volume + delta, 2))
 
-    def to_menu(self):
+    def go_back(self):
         self.game.sound('back')
-        self.game.change_scene('menu')
+        self.game.change_scene(self.return_scene)
 
     def handle_events(self, events):
         for event in events:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                self.to_menu()
+                if not getattr(event, 'repeat', False):
+                    self.go_back()
                 return
             for button in self.buttons:
                 button.handle_event(event)
@@ -217,10 +223,14 @@ class OptionsScene(Scene):
                 return
 
     def update(self, dt):
-        self.backdrop.update(dt)
+        if self.return_scene == 'menu':
+            self.backdrop.update(dt)
 
     def draw(self, surface):
-        self.backdrop.draw(surface)
+        if self.return_scene == 'pause':
+            self.game.scenes['pause'].draw_background(surface)
+        else:
+            self.backdrop.draw(surface)
         surface.blit(self.panel, (260, 180))
         self.type.text(surface, 'OPCIONES DE AUDIO', (360, 210), 40, AMBER)
         for label, volume, y, color in (('Música', self.game.music_volume, 265, WATER),
@@ -231,8 +241,60 @@ class OptionsScene(Scene):
         for button in self.buttons:
             button.draw(surface)
         self.type.text(surface, '0 % silencia · 100 % conserva la mezcla original', (360, 655), 24, MUTED)
-        self.type.text(surface, 'Escape: volver · Los ajustes se mantienen hasta cerrar el juego.',
+        self.type.text(surface, 'Escape: volver · Ajustes hasta cerrar el juego.'
+                       if self.return_scene == 'menu' else 'Escape: volver a la pausa · La partida sigue pausada.',
                        (360, 692), 22, MUTED)
+
+
+class PauseScene(Scene):
+    """Congela la presentación; solo PlayScene actualiza la simulación."""
+    def __init__(self, game):
+        super().__init__(game)
+        self.type = Typography()
+        self.background = pygame.Surface((1280, 800))
+        self.shade = pygame.Surface((1280, 800), pygame.SRCALPHA)
+        self.shade.fill((3, 8, 11, 170))
+        self.buttons = [
+            make_button(game, 460, 340, 360, 54, 'Continuar', self.resume, 28),
+            make_button(game, 460, 410, 360, 54, 'Opciones',
+                        lambda: game.change_scene('options'), 28),
+            make_button(game, 460, 480, 360, 54, 'Volver al menú', self.to_menu, 28),
+        ]
+
+    def on_enter(self):
+        self.game.scenes['play'].draw(self.background)
+
+    def resume(self):
+        self.game.sound('back')
+        self.game.change_scene('play')
+
+    def to_menu(self):
+        self.game.sound('back')
+        self.game.change_scene('menu')
+
+    def handle_events(self, events):
+        for event in events:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                if not getattr(event, 'repeat', False):
+                    self.resume()
+                return
+            for button in self.buttons:
+                button.handle_event(event)
+            if self.game.current_scene is not self:
+                return
+
+    def draw_background(self, surface):
+        surface.blit(self.background, (0, 0))
+        surface.blit(self.shade, (0, 0))
+
+    def draw(self, surface):
+        self.draw_background(surface)
+        pygame.draw.rect(surface, PANEL, (400, 220, 480, 400), border_radius=12)
+        pygame.draw.rect(surface, EDGE, (400, 220, 480, 400), 2, border_radius=12)
+        self.type.text(surface, 'PAUSA', (562, 260), 48, AMBER)
+        for button in self.buttons:
+            button.draw(surface)
+        self.type.text(surface, 'Escape: continuar', (548, 570), 22, MUTED)
 
 
 class PlayScene(Scene):
@@ -363,7 +425,9 @@ class PlayScene(Scene):
                 if event.key in directions:
                     self.command('move_direction', directions[event.key])
                 elif event.key == pygame.K_ESCAPE:
-                    self.command('cancel_route')
+                    if not getattr(event, 'repeat', False):
+                        self.game.change_scene('pause')
+                    return
                 elif event.key == pygame.K_SPACE:
                     self.command('end_turn')
                 elif event.key == pygame.K_e:
@@ -421,7 +485,7 @@ class PlayScene(Scene):
         elif state.map_id == 'hondonada':
             t.wrapped(surface, 'La Hondonada lleva días sin agua. Abre el paso de mantenimiento y busca suministros.', (1034, 431), 214, 22, MUTED)
         t.text(surface, 'WASD / clic: mover', (1034, 588), 22, MUTED)
-        t.text(surface, 'Escape: cancelar ruta', (1034, 616), 22, MUTED)
+        t.text(surface, 'Escape: pausa / opciones', (1034, 616), 22, MUTED)
         t.text(surface, 'E: recoger / activar', (1034, 644), 22, MUTED)
         t.text(surface, 'Espacio: fin de turno', (1034, 672), 22, MUTED)
         pygame.draw.rect(surface, PANEL, (0, 640, 1008, 160))
