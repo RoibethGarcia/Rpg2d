@@ -9,7 +9,7 @@ from game.menu_backdrop import MenuBackdrop
 from game.model import GameState
 from game.ending import EndingScene
 from game.howto import HowToPlayScene
-from game.scenes import MenuScene, OptionsScene, PlayScene, VictoryScene, DefeatScene
+from game.scenes import MenuScene, OptionsScene, PauseScene, PlayScene, VictoryScene, DefeatScene
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -36,7 +36,7 @@ class LastValveGame(GameLoop):
         self._ambience_map = None
         self.backdrop = MenuBackdrop(self)
         self.scenes = {'menu': MenuScene(self), 'options': OptionsScene(self), 'howto': HowToPlayScene(self), 'ending': EndingScene(self),
-                       'play': PlayScene(self),
+                       'play': PlayScene(self), 'pause': PauseScene(self),
                        'victory': VictoryScene(self), 'defeat': DefeatScene(self)}
         self.current_scene = self.scenes['menu']
 
@@ -81,7 +81,7 @@ class LastValveGame(GameLoop):
         """Solo cargar al cambiar de mapa; el stream no usa el canal de UI."""
         if not self.audio_enabled:
             return
-        map_id = (self.state.map_id if self.current_scene is self.scenes['play']
+        map_id = (self.state.map_id if self._in_gameplay()
                   and self.state is not None else None)
         resource = self.manifest['ambiences'].get(map_id)
         target = map_id if resource is not None else None
@@ -93,6 +93,12 @@ class LastValveGame(GameLoop):
             pygame.mixer.music.set_volume(resource['volume'] * self.music_volume)
             pygame.mixer.music.play(loops=-1)
             self._ambience_map = target
+
+    def _in_gameplay(self):
+        """Pausa y sus opciones conservan la partida y la pista actual."""
+        return (self.current_scene in (self.scenes['play'], self.scenes['pause'])
+                or (self.current_scene is self.scenes['options']
+                    and self.scenes['options'].return_scene == 'pause'))
 
     def start_new_game(self, map_id='hondonada'):
         if map_id not in ('hondonada', 'puesto', 'planta'):
@@ -117,11 +123,15 @@ class LastValveGame(GameLoop):
 
     def change_scene(self, scene_name):
         previous = self.current_scene
-        if self.current_scene is self.scenes['play'] and scene_name != 'play':
+        if self._in_gameplay() and scene_name not in ('play', 'pause', 'options'):
             # Dejar terminar el golpe letal al mostrar derrota; no reproducirlo otra vez.
             self.scenes['play'].reset(stop_audio=scene_name != 'defeat')
         elif scene_name == 'menu':
             self.stop_combat_sounds()
+        if scene_name == 'options':
+            self.scenes['options'].on_enter('pause' if previous is self.scenes['pause'] else 'menu')
+        if scene_name == 'pause' and previous is self.scenes['play']:
+            self.scenes['pause'].on_enter()
         self.current_scene = self.scenes[scene_name]
         if scene_name == 'ending':
             self.scenes['ending'].on_enter()
