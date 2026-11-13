@@ -36,15 +36,20 @@ class EnvironmentalEffectsTests(unittest.TestCase):
         self.assertIsNotNone(self.art.effects)
         return self.art.effects
 
-    def test_effects_only_exist_in_scenario_one_and_defaults_are_subtle(self):
+    def test_every_scenario_has_effects_and_defaults_are_subtle(self):
         fx = self.effects()
         self.assertTrue(fx.config.enabled)
         self.assertLessEqual(fx.config.max_birds, 5)
         self.assertGreaterEqual(fx.config.max_birds, 2)
         self.assertLessEqual(fx.config.max_particles, 64)
         self.assertGreater(len(fx.river), 0)
+        # Puesto y Planta animan solo agua y aves: sin humo ni vapor propios.
         for map_id in ('puesto', 'planta'):
-            self.assertIsNone(self.renderer.layered_maps[map_id].effects)
+            other = self.renderer.layered_maps[map_id].effects
+            self.assertIsNotNone(other)
+            self.assertTrue(other.config.enabled)
+            self.assertLessEqual(other.config.max_birds, 5)
+            self.assertEqual(other.emitters, ())
 
     def test_dt_partition_has_same_poses_and_draw_does_not_advance_time(self):
         fx = self.effects()

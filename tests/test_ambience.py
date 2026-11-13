@@ -166,7 +166,8 @@ class AmbienceTests(unittest.TestCase):
                     self.music.reset_mock()
                     self.game.state.mode = mode
                     self.game.update_game_logic(.02)
-                    self.assertIs(self.game.current_scene, self.game.scenes[mode])
+                    expected = 'ending' if mode == 'victory' else mode  # Cierre antes de créditos.
+                    self.assertIs(self.game.current_scene, self.game.scenes[expected])
                     self.music.stop.assert_called_once()
                     self.music.unload.assert_called_once()
 

@@ -136,6 +136,7 @@ class WorldRenderer:
         self.projection = Projection(48, 24, origin=(400, 110))
         self.actors = {}
         self.villagers = {}
+        self.floaters = []
         self.environment = EnvironmentArt(game)
         self.hondonada = LayeredEnvironmentArt(game, WORLD_RECT)
         self.puesto = LayeredEnvironmentArt(game, WORLD_RECT, 'puesto')
@@ -208,12 +209,30 @@ class WorldRenderer:
     def reset(self, reset_zoom=True):
         self.actors.clear()
         self.villagers.clear()
+        self.floaters.clear()
         for art in self.layered_maps.values():
             if art.effects is not None:
                 art.effects.reset()
         if reset_zoom:
             self.camera.level = 0
         self.configure(self.game.state)
+
+    FLOAT_SECONDS = .9
+
+    def add_floater(self, cell, text, color, born):
+        self.floaters.append({'cell': cell, 'text': text, 'color': color, 'born': born})
+
+    def draw_floaters(self, surface, state):
+        self.floaters[:] = [f for f in self.floaters if state.elapsed - f['born'] <= self.FLOAT_SECONDS]
+        for f in self.floaters:
+            fraction = max(0, state.elapsed - f['born']) / self.FLOAT_SECONDS
+            x, y = self.projection.center(tuple(f['cell']))
+            y -= 58 + 30 * fraction
+            alpha = 255 if fraction < .5 else round(255 * (1 - (fraction - .5) * 2))
+            for color, shift in (((20, 24, 26), 2), (f['color'], 0)):
+                image = self.type.fonts[40].render(f['text'], True, color)
+                image.set_alpha(alpha)
+                surface.blit(image, image.get_rect(center=(x + shift, y + shift)))
 
     def update_ambient(self, dt, state):
         art = self.layered_maps.get(state.map_id)
@@ -330,6 +349,12 @@ class WorldRenderer:
             pygame.draw.polygon(target, color, self.diamond(exit.cell), 3)
             x, y = self.projection.center(exit.cell)
             self.type.text(target, f'E: {state.maps[exit.destination].name}', (x - 35, y - 34), 18, color)
+        for obj in state.objects:
+            # Cartel sobre el decorado (como las salidas): sin él no se ve qué activar.
+            if obj['kind'] == 'maintenance' and obj['id'] not in state.opened:
+                x, y = self.projection.center(tuple(obj['cell']))
+                self.type.text(target, 'E: Mantenimiento', (x - 50, y + 8), 18, AMBER)
+        self.draw_floaters(target, state)
         target.set_clip(old_clip)
         if self.camera.zoom != 1:
             if background is None:

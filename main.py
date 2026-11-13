@@ -1,6 +1,11 @@
 """Ejecutar con .venv/bin/python main.py desde cualquier directorio."""
 import argparse
-from game.app import LastValveGame
+import os
+
+# macOS: que el clic que da foco a la ventana también llegue al juego (sin doble clic).
+os.environ.setdefault('SDL_MOUSE_FOCUS_CLICKTHROUGH', '1')
+
+from game.app import LastValveGame  # noqa: E402 (después de fijar el entorno de SDL)
 
 
 def main():

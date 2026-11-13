@@ -5,7 +5,10 @@ import pygame
 
 from engine.asset_manager import AssetManager
 from engine.game_loop import GameLoop
+from game.menu_backdrop import MenuBackdrop
 from game.model import GameState
+from game.ending import EndingScene
+from game.howto import HowToPlayScene
 from game.scenes import MenuScene, OptionsScene, PlayScene, VictoryScene, DefeatScene
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,7 +34,8 @@ class LastValveGame(GameLoop):
             self.set_effects_volume(self.effects_volume)
         self.state = None
         self._ambience_map = None
-        self.scenes = {'menu': MenuScene(self), 'options': OptionsScene(self),
+        self.backdrop = MenuBackdrop(self)
+        self.scenes = {'menu': MenuScene(self), 'options': OptionsScene(self), 'howto': HowToPlayScene(self), 'ending': EndingScene(self),
                        'play': PlayScene(self),
                        'victory': VictoryScene(self), 'defeat': DefeatScene(self)}
         self.current_scene = self.scenes['menu']
@@ -112,12 +116,17 @@ class LastValveGame(GameLoop):
         self.sound('confirm')
 
     def change_scene(self, scene_name):
+        previous = self.current_scene
         if self.current_scene is self.scenes['play'] and scene_name != 'play':
             # Dejar terminar el golpe letal al mostrar derrota; no reproducirlo otra vez.
             self.scenes['play'].reset(stop_audio=scene_name != 'defeat')
         elif scene_name == 'menu':
             self.stop_combat_sounds()
         self.current_scene = self.scenes[scene_name]
+        if scene_name == 'ending':
+            self.scenes['ending'].on_enter()
+        if scene_name == 'menu' and previous not in (self.scenes['options'], self.scenes['howto']):
+            self.scenes['menu'].on_enter()
         self._sync_ambience()
 
     def stop(self):
@@ -132,7 +141,8 @@ class LastValveGame(GameLoop):
     def update_game_logic(self, dt):
         self.current_scene.update(dt)
         if self.current_scene is self.scenes['play'] and self.state.mode in ('victory', 'defeat'):
-            self.change_scene(self.state.mode)
+            # La victoria pasa por la pantalla de cierre antes de los créditos.
+            self.change_scene('ending' if self.state.mode == 'victory' else self.state.mode)
             self.sound('confirm' if self.state.mode == 'victory' else 'error')
         self._sync_ambience()
 
